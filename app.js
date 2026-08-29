@@ -410,6 +410,7 @@ function handleLoginSubmit(e) {
 // ==========================================================================
 
 let navigationHistory = [];
+let activeCategoryFilter = null;
 
 function navigateTo(pageId, pushToHistory = true) {
   if (pushToHistory && activePage && activePage !== pageId) {
@@ -446,8 +447,7 @@ function updateBackButton() {
   const backBtn = document.getElementById('global-back-btn');
   if (!backBtn) return;
   
-  const isHome = activePage === 'home' || activePage === 'admin-dashboard';
-  if (navigationHistory.length > 0 && !isHome) {
+  if (navigationHistory.length > 0) {
     backBtn.style.display = 'inline-flex';
   } else {
     backBtn.style.display = 'none';
@@ -693,7 +693,8 @@ function renderHomePage(container) {
   // Bind popular category clicks
   container.querySelectorAll('.popular-cat-card').forEach(card => {
     card.addEventListener('click', () => {
-      renderCategoriesPageFiltered(card.dataset.cat);
+      activeCategoryFilter = card.dataset.cat;
+      navigateTo('categories');
     });
   });
 
@@ -712,8 +713,14 @@ function renderHomePage(container) {
   // Bind Buyer widgets navigation
   if (role === 'buyer') {
     container.querySelector('#buyer-standards-widget').addEventListener('click', () => navigateTo('bis'));
-    container.querySelector('#buyer-spec-widget').addEventListener('click', () => renderCategoriesPageFiltered('All'));
-    container.querySelector('#buyer-mfrs-widget').addEventListener('click', () => renderCategoriesPageFiltered('All'));
+    container.querySelector('#buyer-spec-widget').addEventListener('click', () => {
+      activeCategoryFilter = 'All';
+      navigateTo('categories');
+    });
+    container.querySelector('#buyer-mfrs-widget').addEventListener('click', () => {
+      activeCategoryFilter = 'All';
+      navigateTo('categories');
+    });
   }
 
   // Bind Seller widgets navigation
@@ -1669,7 +1676,9 @@ function renderAdminAudit(container) {
 // ==========================================================================
 
 function renderCategoriesPage(container) {
-  renderCategoriesPageFiltered(null, container);
+  const filter = activeCategoryFilter || null;
+  activeCategoryFilter = null;
+  renderCategoriesPageFiltered(filter, container);
 }
 
 function renderCategoriesPageFiltered(filterCategory, container) {
@@ -1682,7 +1691,13 @@ function renderCategoriesPageFiltered(filterCategory, container) {
   const pageHeader = document.createElement('div');
   pageHeader.className = 'page-title-area';
   pageHeader.innerHTML = `
-    <h1>Product & Component Catalog</h1>
+    <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+      <button class="app-back-btn" onclick="window.navigateBackGlobal()" style="padding:5px 14px; font-size:0.8rem;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+        <span>Back</span>
+      </button>
+      <h1 style="margin:0;">Product & Component Catalog</h1>
+    </div>
     <p>Browse active procurement inventories mapping directly to validated standard requirements.</p>
   `;
   targetContainer.appendChild(pageHeader);
@@ -1792,7 +1807,13 @@ window.showProductProcureAlertGlobal = (prodId) => {
 function renderBISPage(container) {
   container.innerHTML = `
     <div class="page-title-area">
-      <h1>National Indian Standards Registry (BIS)</h1>
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+        <button class="app-back-btn" onclick="window.navigateBackGlobal()" style="padding:5px 14px; font-size:0.8rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <span>Back</span>
+        </button>
+        <h1 style="margin:0;">National Indian Standards Registry (BIS)</h1>
+      </div>
       <p>Search official Bureau of Indian Standards (IS) certifications, directives, and verified manufacturer databases.</p>
     </div>
 
