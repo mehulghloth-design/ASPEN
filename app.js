@@ -447,7 +447,9 @@ function updateBackButton() {
   const backBtn = document.getElementById('global-back-btn');
   if (!backBtn) return;
   
-  if (navigationHistory.length > 0) {
+  // Show back button on any page that is NOT the home/root page
+  const homePages = ['home', 'admin-dashboard'];
+  if (!homePages.includes(activePage)) {
     backBtn.style.display = 'inline-flex';
   } else {
     backBtn.style.display = 'none';
