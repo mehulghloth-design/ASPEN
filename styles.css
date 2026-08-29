@@ -205,10 +205,11 @@ button, input, select {
    ========================================================================== */
 
 .app-container {
-  max-width: 1300px;
-  width: 100%;
+  max-width: 1600px;
+  width: 88%;
+  min-height: calc(100vh - 48px);
   margin: 0 auto;
-  padding: 24px;
+  padding: 24px 0;
   display: flex;
   flex-direction: column;
   gap: 20px;
@@ -299,7 +300,8 @@ body.dark-mode .circle-icon-btn {
   display: grid;
   grid-template-columns: 260px 1fr;
   gap: 20px;
-  align-items: start;
+  align-items: stretch;
+  flex: 1;
 }
 
 /* Sidebar Card */
@@ -312,6 +314,8 @@ body.dark-mode .circle-icon-btn {
   flex-direction: column;
   gap: 24px;
   min-height: 520px;
+  height: 100%;
+  box-sizing: border-box;
 }
 
 .sidebar-nav {
@@ -397,11 +401,13 @@ body.dark-mode .nav-item.active .nav-icon-svg {
   border-radius: var(--radius-lg);
   padding: 48px;
   min-height: 520px;
+  height: 100%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-  /* Prevent inner content from breaking out */
   overflow: hidden;
   width: 100%;
   box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
 }
 
 /* ==========================================================================
@@ -1229,8 +1235,10 @@ body.dark-mode .primary-btn {
 /* ── Tablet Landscape: ≤ 1024px ──────────────────────────────────────────── */
 @media (max-width: 1024px) {
   .app-container {
-    padding: 16px;
+    width: 94%;
+    padding: 16px 0;
     gap: 16px;
+    min-height: auto;
   }
 
   .app-header {
