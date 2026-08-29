@@ -344,6 +344,24 @@ body.dark-mode .circle-icon-btn {
   font-weight: 700;
 }
 
+.nav-icon-svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+  stroke: var(--text-sub);
+  transition: var(--transition);
+}
+
+.nav-item:hover .nav-icon-svg,
+.nav-item.active .nav-icon-svg {
+  stroke: var(--accent-navy);
+}
+
+body.dark-mode .nav-item:hover .nav-icon-svg,
+body.dark-mode .nav-item.active .nav-icon-svg {
+  stroke: #ffffff;
+}
+
 .role-badge {
   padding: 6px 12px;
   border-radius: var(--radius-sm);

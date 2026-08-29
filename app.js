@@ -17,10 +17,10 @@ const MOCK_USERS = {
   },
   buyer: {
     role: 'buyer',
-    name: 'Officer Rajesh Kumar',
+    name: 'Buyer',
     subtext: 'National Health Authority',
-    email: 'rajesh.kumar@aspen.gov.in',
-    initials: 'RK',
+    email: 'buyer@aspen.gov.in',
+    initials: 'B',
     org: 'NHA India',
     savedStandards: ['IS 758', 'IS 4381'],
     rfqs: [
@@ -30,10 +30,10 @@ const MOCK_USERS = {
   },
   seller: {
     role: 'seller',
-    name: 'Supreme Medical Ltd.',
+    name: 'Seller',
     subtext: 'Certified Supplier',
-    email: 'compliance@suprememedical.co.in',
-    initials: 'SM',
+    email: 'seller@aspen.gov.in',
+    initials: 'S',
     org: 'Supreme Medical Manufacturers Ltd.',
     capacity: '50,000 units / month',
     products: [
@@ -146,12 +146,12 @@ const MOCK_PRODUCTS = [
 
 const MOCK_VERIFICATION_LISTS = {
   buyers: [
-    { id: 'B-883', org: 'National Health Authority', officer: 'Rajesh Kumar', email: 'rajesh.kumar@aspen.gov.in', status: 'Verified', date: '2026-08-20' },
+    { id: 'B-883', org: 'National Health Authority', officer: 'Buyer Officer', email: 'buyer@aspen.gov.in', status: 'Verified', date: '2026-08-20' },
     { id: 'B-441', org: 'Central Public Works Dept (CPWD)', officer: 'Anil Saxena', email: 'a.saxena@cpwd.gov.in', status: 'Pending Review', date: '2026-08-27' },
     { id: 'B-109', org: 'Defense Research & Dev Org (DRDO)', officer: 'Dr. S. Nair', email: 's.nair@drdo.res.in', status: 'Verified', date: '2026-07-15' }
   ],
   sellers: [
-    { id: 'S-209', org: 'Supreme Medical Ltd.', rep: 'Vijay Shinde', email: 'compliance@suprememedical.co.in', status: 'Verified', date: '2026-08-11' },
+    { id: 'S-209', org: 'Supreme Medical Ltd.', rep: 'Vijay Shinde', email: 'seller@aspen.gov.in', status: 'Verified', date: '2026-08-11' },
     { id: 'S-772', org: 'Apex Electricals Ltd.', rep: 'Harish Roy', email: 'sales@apexelectricals.com', status: 'Pending Review', date: '2026-08-28' },
     { id: 'S-014', org: 'Elite Piping Systems', rep: 'Nisha Gupta', email: 'nisha@elitepipes.co.in', status: 'Verified', date: '2026-06-30' }
   ]
@@ -159,8 +159,8 @@ const MOCK_VERIFICATION_LISTS = {
 
 const MOCK_AUDIT_LOGS = [
   { timestamp: '2026-08-29 21:12:44', user: 'admin.support@aspen.gov.in', action: 'Approved Seller registration for Apex Electricals Ltd.' },
-  { timestamp: '2026-08-29 19:40:12', user: 'compliance@suprememedical.co.in', action: 'Uploaded test compliance reports for IS 758 Gauze audit' },
-  { timestamp: '2026-08-29 18:05:33', user: 'rajesh.kumar@aspen.gov.in', action: 'Created new tender/RFQ RFQ-2026-004 (Cotton Bandage Cloth)' },
+  { timestamp: '2026-08-29 19:40:12', user: 'seller@aspen.gov.in', action: 'Uploaded test compliance reports for IS 758 Gauze audit' },
+  { timestamp: '2026-08-29 18:05:33', user: 'buyer@aspen.gov.in', action: 'Created new tender/RFQ RFQ-2026-004 (Cotton Bandage Cloth)' },
   { timestamp: '2026-08-29 14:15:20', user: 'admin.support@aspen.gov.in', action: 'Updated BIS Database standard metadata: IS 4985' },
   { timestamp: '2026-08-28 10:29:11', user: 'a.saxena@cpwd.gov.in', action: 'Submitted buyer registration request for CPWD access' }
 ];
@@ -418,6 +418,15 @@ function navigateTo(pageId) {
   window.scrollTo(0, 0);
 }
 
+const NAV_ICONS = {
+  home: `<svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9z"/><path d="M9 21V12h6v9"/></svg>`,
+  categories: `<svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 3h13a1 1 0 0 1 1 1v3H7z"/><path d="M5 7h15a1 1 0 0 1 1 1v3H5z"/><path d="M3 11h18a2 2 0 0 1 2 2v7a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2z"/><rect x="9" y="14" width="6" height="3" rx="0.5"/></svg>`,
+  bis: `<svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7.5"/><polyline points="8.5 12 11 14.5 15.5 9.5"/><rect x="10.5" y="1" width="3" height="3" rx="0.5"/><circle cx="21" cy="12" r="1.5"/><rect x="10.5" y="20" width="3" height="3" rx="0.5"/><circle cx="3" cy="12" r="1.5"/></svg>`,
+  active: `<svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="15" height="18" rx="2"/><line x1="2" y1="6" x2="6" y2="6"/><line x1="2" y1="10" x2="6" y2="10"/><line x1="2" y1="14" x2="6" y2="14"/><line x1="2" y1="18" x2="6" y2="18"/><circle cx="12" cy="9.5" r="2.5"/><path d="M9.2 15c0-1.5 1.2-2.5 2.8-2.5s2.8 1 2.8 2.5"/><line x1="9" y1="18" x2="15" y2="18"/></svg>`,
+  products: `<svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
+  settings: `<svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`
+};
+
 function renderSidebarNav() {
   const navContainer = document.getElementById('sidebar-nav');
   navContainer.innerHTML = '';
@@ -426,37 +435,33 @@ function renderSidebarNav() {
   
   if (currentUser.role === 'public') {
     menuItems = [
-      { id: 'home', label: '🏠 Home' },
-      { id: 'categories', label: '📂 Categories' },
-      { id: 'active', label: '⚡ Active' },
-      { id: 'bis', label: '📘 BIS' },
-      { id: 'settings', label: '⚙ Settings' }
+      { id: 'home', label: 'Home', icon: NAV_ICONS.home },
+      { id: 'categories', label: 'Categories', icon: NAV_ICONS.categories },
+      { id: 'active', label: 'Active', icon: NAV_ICONS.active },
+      { id: 'bis', label: 'BIS', icon: NAV_ICONS.bis },
+      { id: 'settings', label: 'Settings', icon: NAV_ICONS.settings }
     ];
   } else if (currentUser.role === 'buyer') {
     menuItems = [
-      { id: 'home', label: 'Home' },
-      { id: 'categories', label: 'Categories' },
-      { id: 'active', label: 'Active' },
-      { id: 'bis', label: 'BIS' }
+      { id: 'home', label: 'Home', icon: NAV_ICONS.home },
+      { id: 'categories', label: 'Categories', icon: NAV_ICONS.categories },
+      { id: 'active', label: 'Active', icon: NAV_ICONS.active },
+      { id: 'bis', label: 'BIS', icon: NAV_ICONS.bis }
     ];
   } else if (currentUser.role === 'seller') {
     menuItems = [
-      { id: 'home', label: 'Home' },
-      { id: 'my-products', label: 'Products' },
-      { id: 'active', label: 'Opportunities' },
-      { id: 'bis', label: 'BIS' }
+      { id: 'home', label: 'Home', icon: NAV_ICONS.home },
+      { id: 'my-products', label: 'Products', icon: NAV_ICONS.products },
+      { id: 'active', label: 'Opportunities', icon: NAV_ICONS.active },
+      { id: 'bis', label: 'BIS', icon: NAV_ICONS.bis }
     ];
   } else if (currentUser.role === 'admin') {
     menuItems = [
-      { id: 'admin-dashboard', label: 'Dashboard' },
-      { id: 'admin-users', label: 'Users' },
-      { id: 'admin-users', label: 'Sellers' },
-      { id: 'admin-users', label: 'Buyers' },
-      { id: 'bis', label: 'BIS' },
-      { id: 'categories', label: 'Categories' },
-      { id: 'admin-analytics', label: 'Analytics' },
-      { id: 'admin-audit', label: 'Audit Logs' },
-      { id: 'settings', label: 'Settings' }
+      { id: 'admin-dashboard', label: 'Dashboard', icon: NAV_ICONS.home },
+      { id: 'admin-users', label: 'Users', icon: NAV_ICONS.active },
+      { id: 'bis', label: 'BIS', icon: NAV_ICONS.bis },
+      { id: 'categories', label: 'Categories', icon: NAV_ICONS.categories },
+      { id: 'settings', label: 'Settings', icon: NAV_ICONS.settings }
     ];
   }
   
@@ -464,7 +469,7 @@ function renderSidebarNav() {
     const navLink = document.createElement('a');
     navLink.className = `nav-item ${activePage === item.id ? 'active' : ''}`;
     navLink.dataset.page = item.id;
-    navLink.innerHTML = `<span>${item.label}</span>`;
+    navLink.innerHTML = `${item.icon || ''}<span>${item.label}</span>`;
     navLink.addEventListener('click', (e) => {
       e.preventDefault();
       navigateTo(item.id);
