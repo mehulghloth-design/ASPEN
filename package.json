@@ -16,6 +16,10 @@
     "compliance"
   ],
   "author": "Antigravity Agent",
+  "contributors": [
+    "Aava16",
+    "mehulghloth-design"
+  ],
   "license": "ISC",
   "devDependencies": {
     "vite": "^5.0.0"

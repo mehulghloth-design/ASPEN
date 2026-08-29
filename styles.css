@@ -251,6 +251,34 @@ body.dark-mode .logo-text {
   cursor: pointer;
 }
 
+/* Back Button Styling */
+.app-back-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  background-color: var(--bg-canvas);
+  border: 1px solid var(--border-line);
+  border-radius: var(--radius-full);
+  font-size: 0.82rem;
+  font-weight: 700;
+  color: var(--text-main);
+  cursor: pointer;
+  transition: var(--transition);
+  margin-right: 8px;
+}
+
+.app-back-btn:hover {
+  background-color: var(--accent-navy);
+  color: #ffffff;
+  border-color: var(--accent-navy);
+}
+
+body.dark-mode .app-back-btn:hover {
+  background-color: #ffffff;
+  color: #0f172a;
+}
+
 .header-right {
   display: flex;
   align-items: center;

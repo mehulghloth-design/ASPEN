@@ -249,6 +249,14 @@ function initUIComponents() {
     document.body.classList.toggle('sidebar-open');
   });
 
+  // Global Back Button Listener
+  const globalBackBtn = document.getElementById('global-back-btn');
+  if (globalBackBtn) {
+    globalBackBtn.addEventListener('click', () => {
+      navigateBack();
+    });
+  }
+
   // Authentication Modal Close
   document.getElementById('auth-modal-close').addEventListener('click', () => {
     toggleModal('auth-modal', false);
@@ -401,7 +409,12 @@ function handleLoginSubmit(e) {
 // 5. ROUTING & RENDER ENGINE
 // ==========================================================================
 
-function navigateTo(pageId) {
+let navigationHistory = [];
+
+function navigateTo(pageId, pushToHistory = true) {
+  if (pushToHistory && activePage && activePage !== pageId) {
+    navigationHistory.push(activePage);
+  }
   activePage = pageId;
   document.body.classList.remove('sidebar-open'); // Close mobile menu if open
   
@@ -415,8 +428,33 @@ function navigateTo(pageId) {
   });
 
   renderPageContent(pageId);
+  updateBackButton();
   window.scrollTo(0, 0);
 }
+
+function navigateBack() {
+  if (navigationHistory.length > 0) {
+    const prevPage = navigationHistory.pop();
+    navigateTo(prevPage, false);
+  } else {
+    const homePage = currentUser.role === 'admin' ? 'admin-dashboard' : 'home';
+    navigateTo(homePage, false);
+  }
+}
+
+function updateBackButton() {
+  const backBtn = document.getElementById('global-back-btn');
+  if (!backBtn) return;
+  
+  const isHome = activePage === 'home' || activePage === 'admin-dashboard';
+  if (navigationHistory.length > 0 && !isHome) {
+    backBtn.style.display = 'inline-flex';
+  } else {
+    backBtn.style.display = 'none';
+  }
+}
+
+window.navigateBackGlobal = navigateBack;
 
 const NAV_ICONS = {
   home: `<svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5L12 3l9 7.5v9a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-9z"/><path d="M9 21V12h6v9"/></svg>`,
