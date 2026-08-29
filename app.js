@@ -329,6 +329,9 @@ function initUIComponents() {
   // Render initial profile state and sidebar links
   updateRoleIdentityUI();
   renderNotifications();
+
+  // Initialize registration modal
+  initRegisterModal();
 }
 
 // ==========================================================================
@@ -1893,37 +1896,231 @@ function renderBISPage(container) {
 // ==========================================================================
 
 function renderSettingsPage(container) {
+  const isLoggedIn = currentUser.role !== 'public';
+
   container.innerHTML = `
     <div class="page-title-area">
-      <h1>Platform Settings</h1>
-      <p>Configure user preferences, notification rules, and role settings.</p>
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+        <button class="app-back-btn" onclick="window.navigateBackGlobal()" style="padding:5px 14px; font-size:0.8rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <span>Back</span>
+        </button>
+        <h1 style="margin:0;">Settings</h1>
+      </div>
+      <p>Manage your account, registration, and platform preferences.</p>
     </div>
-    
-    <div class="card" style="max-width: 600px; display:flex; flex-direction:column; gap:1.5rem;">
-      <h3>User Profile Parameters</h3>
-      <div class="form-group">
-        <label>Account Name</label>
-        <input type="text" value="${currentUser.name}" readonly style="background-color:var(--bg-primary);">
-      </div>
-      <div class="form-group">
-        <label>Organization Domain</label>
-        <input type="text" value="${currentUser.org}" readonly style="background-color:var(--bg-primary);">
-      </div>
-      <div class="form-group">
-        <label>Email Address</label>
-        <input type="email" value="${currentUser.email}" readonly style="background-color:var(--bg-primary);">
+
+    <!-- Account section -->
+    <div class="card" style="max-width:660px; display:flex; flex-direction:column; gap:1.4rem; margin-bottom:1.5rem;">
+      <div>
+        <p class="settings-section-title">Current Account</p>
+        <div style="display:flex; align-items:center; gap:14px; padding:14px; background:var(--bg-primary); border-radius:var(--radius-md);">
+          <div style="width:48px; height:48px; border-radius:50%; background:var(--accent-navy); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:800; flex-shrink:0;">
+            ${currentUser.initials}
+          </div>
+          <div style="flex:1; min-width:0;">
+            <div style="font-weight:700; font-size:0.95rem; color:var(--text-main);">${currentUser.name}</div>
+            <div style="font-size:0.78rem; color:var(--text-muted);">${currentUser.email} &nbsp;·&nbsp; ${currentUser.org}</div>
+          </div>
+          <span class="badge ${isLoggedIn ? 'badge-success' : 'badge-neutral'}" style="flex-shrink:0;">
+            ${isLoggedIn ? currentUser.role.toUpperCase() : 'Guest'}
+          </span>
+        </div>
       </div>
 
-      <h3 style="margin-top:1rem; border-top:1px solid var(--border-color); padding-top:1.5rem;">Dashboard Configurations</h3>
-      <div class="form-group" style="flex-direction:row; justify-content:space-between; align-items:center;">
-        <div>
-          <strong style="font-size:0.9rem; display:block;">Instant Notifications</strong>
-          <span style="font-size:0.75rem; color:var(--text-muted);">Receive push updates for verification updates and RFQ bids.</span>
+      <!-- Profile fields -->
+      <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+        <div class="form-group">
+          <label>Account Name</label>
+          <input type="text" value="${currentUser.name}" readonly style="background-color:var(--bg-primary);">
         </div>
-        <input type="checkbox" checked style="width:20px; height:20px; cursor:pointer;">
+        <div class="form-group">
+          <label>Organization</label>
+          <input type="text" value="${currentUser.org}" readonly style="background-color:var(--bg-primary);">
+        </div>
+        <div class="form-group" style="grid-column:1/-1;">
+          <label>Email Address</label>
+          <input type="email" value="${currentUser.email}" readonly style="background-color:var(--bg-primary);">
+        </div>
+      </div>
+
+      <!-- Notifications toggle -->
+      <div>
+        <p class="settings-section-title">Dashboard Preferences</p>
+        <div class="form-group" style="flex-direction:row; justify-content:space-between; align-items:center; padding:12px; background:var(--bg-primary); border-radius:var(--radius-sm);">
+          <div>
+            <strong style="font-size:0.88rem; display:block;">Instant Notifications</strong>
+            <span style="font-size:0.75rem; color:var(--text-muted);">Receive push updates for verification and RFQ bids.</span>
+          </div>
+          <input type="checkbox" checked style="width:20px; height:20px; cursor:pointer;">
+        </div>
       </div>
     </div>
+
+    <!-- Registration cards -->
+    <div class="card" style="max-width:660px; display:flex; flex-direction:column; gap:1rem; margin-bottom:1.5rem;">
+      <p class="settings-section-title">Register on Platform</p>
+      <p style="font-size:0.82rem; color:var(--text-muted); margin-top:-0.25rem;">Create a new account to access role-specific features on ASPEN.</p>
+
+      <div class="settings-reg-grid">
+        <!-- Buyer Card -->
+        <div class="settings-reg-card" style="--card-accent:#3b82f6; --card-icon-bg:#dbeafe;" id="reg-card-buyer">
+          <div class="reg-card-icon">🏢</div>
+          <div class="reg-card-title">Register as Buyer</div>
+          <div class="reg-card-desc">Access procurement catalog, submit RFQs, and track BIS-certified vendors.</div>
+          <button class="reg-card-btn" id="reg-btn-buyer">
+            Register Now →
+          </button>
+        </div>
+
+        <!-- Seller Card -->
+        <div class="settings-reg-card" style="--card-accent:#10b981; --card-icon-bg:#d1fae5;" id="reg-card-seller">
+          <div class="reg-card-icon">🏭</div>
+          <div class="reg-card-title">Register as Seller</div>
+          <div class="reg-card-desc">List your certified products, manage BIS certifications, and respond to buyer RFQs.</div>
+          <button class="reg-card-btn" style="color:#10b981;" id="reg-btn-seller">
+            Register Now →
+          </button>
+        </div>
+
+        <!-- Admin Card -->
+        <div class="settings-reg-card" style="--card-accent:#8b5cf6; --card-icon-bg:#ede9fe;" id="reg-card-admin">
+          <div class="reg-card-icon">🛡</div>
+          <div class="reg-card-title">Register as Admin</div>
+          <div class="reg-card-desc">Manage platform users, review compliance audits, and oversee vendor certifications.</div>
+          <button class="reg-card-btn" style="color:#8b5cf6;" id="reg-btn-admin">
+            Register Now →
+          </button>
+        </div>
+      </div>
+
+      <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
+        Already have an account? Use the <strong>Login</strong> button from the profile menu in the top-right corner.
+      </p>
+    </div>
+
+    <!-- Logout -->
+    ${isLoggedIn ? `
+    <div class="card" style="max-width:660px; display:flex; flex-direction:column; gap:1rem;">
+      <p class="settings-section-title">Session</p>
+      <div style="display:flex; align-items:center; justify-content:space-between; gap:16px; flex-wrap:wrap;">
+        <div>
+          <strong style="font-size:0.9rem; display:block; margin-bottom:2px;">Log out of ASPEN</strong>
+          <span style="font-size:0.78rem; color:var(--text-muted);">You will be returned to the Public Guest view.</span>
+        </div>
+        <button class="danger-btn" id="settings-logout-btn">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" y1="12" x2="9" y2="12"/></svg>
+          Log Out
+        </button>
+      </div>
+    </div>` : `
+    <div class="card" style="max-width:660px; background:var(--bg-primary);">
+      <p style="font-size:0.85rem; color:var(--text-muted); text-align:center; padding:0.5rem 0;">
+        You are browsing as a <strong>Public Guest</strong>. Login to access your account settings.
+      </p>
+    </div>`}
   `;
+
+  // Bind registration card buttons
+  ['buyer', 'seller', 'admin'].forEach(role => {
+    const btn = container.querySelector(`#reg-btn-${role}`);
+    const card = container.querySelector(`#reg-card-${role}`);
+    if (btn) btn.addEventListener('click', () => openRegisterModal(role));
+    if (card) card.addEventListener('click', (e) => {
+      if (e.target === card || e.target.className === 'reg-card-icon' || e.target.className === 'reg-card-title' || e.target.className === 'reg-card-desc') {
+        openRegisterModal(role);
+      }
+    });
+  });
+
+  // Bind logout button
+  const logoutBtn = container.querySelector('#settings-logout-btn');
+  if (logoutBtn) {
+    logoutBtn.addEventListener('click', () => {
+      switchRole('public');
+      showToast('You have been logged out successfully.', 'info');
+    });
+  }
+}
+
+// Registration modal helpers
+function openRegisterModal(preselectedRole = 'buyer') {
+  const roleDescriptions = {
+    buyer: 'Access procurement catalog, BIS standards, and submit RFQs.',
+    seller: 'List products, manage BIS certifications, and respond to buyer RFQs.',
+    admin: 'Manage users, review audits, and oversee platform compliance.'
+  };
+  const roleLabels = { buyer: 'Buyer', seller: 'Seller', admin: 'Administrator' };
+
+  // Reset form
+  const form = document.getElementById('register-form');
+  if (form) form.reset();
+
+  // Set active pill
+  document.querySelectorAll('#reg-role-pills .reg-modal-role-pill').forEach(pill => {
+    pill.classList.toggle('active', pill.dataset.regRole === preselectedRole);
+  });
+
+  // Update role description
+  document.getElementById('reg-role-display').textContent = roleLabels[preselectedRole];
+  document.getElementById('reg-role-desc').textContent = roleDescriptions[preselectedRole];
+
+  toggleModal('register-modal', true);
+}
+
+function initRegisterModal() {
+  const roleDescriptions = {
+    buyer: 'Access procurement catalog, BIS standards, and submit RFQs.',
+    seller: 'List products, manage BIS certifications, and respond to buyer RFQs.',
+    admin: 'Manage users, review audits, and oversee platform compliance.'
+  };
+  const roleLabels = { buyer: 'Buyer', seller: 'Seller', admin: 'Administrator' };
+
+  // Close button
+  document.getElementById('register-modal-close').addEventListener('click', () => {
+    toggleModal('register-modal', false);
+  });
+
+  // Role pill switching
+  document.querySelectorAll('#reg-role-pills .reg-modal-role-pill').forEach(pill => {
+    pill.addEventListener('click', () => {
+      document.querySelectorAll('#reg-role-pills .reg-modal-role-pill').forEach(p => p.classList.remove('active'));
+      pill.classList.add('active');
+      const role = pill.dataset.regRole;
+      document.getElementById('reg-role-display').textContent = roleLabels[role];
+      document.getElementById('reg-role-desc').textContent = roleDescriptions[role];
+    });
+  });
+
+  // Form submit
+  document.getElementById('register-form').addEventListener('submit', (e) => {
+    e.preventDefault();
+    const name = document.getElementById('reg-name').value.trim();
+    const email = document.getElementById('reg-email').value.trim();
+    const pwd = document.getElementById('reg-password').value;
+    const confirmPwd = document.getElementById('reg-confirm-password').value;
+    const activeRolePill = document.querySelector('#reg-role-pills .reg-modal-role-pill.active');
+    const selectedRole = activeRolePill ? activeRolePill.dataset.regRole : 'buyer';
+
+    if (pwd !== confirmPwd) {
+      showToast('Passwords do not match. Please try again.', 'error');
+      return;
+    }
+    if (pwd.length < 8) {
+      showToast('Password must be at least 8 characters.', 'error');
+      return;
+    }
+    if (!email.includes('@')) {
+      showToast('Please enter a valid email address.', 'error');
+      return;
+    }
+
+    // Simulate registration — switch to role and log
+    toggleModal('register-modal', false);
+    addAuditLog(email, `New ${selectedRole} account registration submitted: ${name}.`);
+    showToast(`Registration successful! Welcome, ${name.split(' ')[0]}. Switching to ${selectedRole} view.`, 'success');
+    setTimeout(() => switchRole(selectedRole), 800);
+  });
 }
 
 // ==========================================================================

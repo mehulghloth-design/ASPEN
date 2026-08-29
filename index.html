@@ -259,6 +259,56 @@
     </div>
   </div>
 
+  <!-- Registration Modal -->
+  <div class="modal-overlay" id="register-modal">
+    <div class="modal-card" style="max-width:520px;">
+      <button class="modal-close" id="register-modal-close" style="background:none; border:none;">&times;</button>
+      <div class="modal-header-section" style="margin-bottom:20px;">
+        <h2>Create Account</h2>
+        <p>Register to access the ASPEN procurement platform.</p>
+      </div>
+
+      <!-- Role Selector Pills -->
+      <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:20px;" id="reg-role-pills">
+        <button class="reg-modal-role-pill active" data-reg-role="buyer">🏢 Buyer</button>
+        <button class="reg-modal-role-pill" data-reg-role="seller">🏭 Seller</button>
+        <button class="reg-modal-role-pill" data-reg-role="admin">🛡 Administrator</button>
+      </div>
+
+      <form class="auth-form" id="register-form">
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label>Full Name</label>
+            <input type="text" id="reg-name" placeholder="e.g. Priya Sharma" required style="padding:10px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+          </div>
+          <div class="form-group">
+            <label>Organization</label>
+            <input type="text" id="reg-org" placeholder="e.g. Bharat Medical Ltd." required style="padding:10px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+          </div>
+        </div>
+        <div class="form-group">
+          <label>Official Email</label>
+          <input type="email" id="reg-email" placeholder="name@organization.gov.in" required style="padding:10px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+        </div>
+        <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
+          <div class="form-group">
+            <label>Password</label>
+            <input type="password" id="reg-password" placeholder="Min. 8 characters" required style="padding:10px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+          </div>
+          <div class="form-group">
+            <label>Confirm Password</label>
+            <input type="password" id="reg-confirm-password" placeholder="Repeat password" required style="padding:10px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+          </div>
+        </div>
+        <div style="background:var(--bg-primary); border-radius:var(--radius-sm); padding:10px 14px; margin-top:4px; font-size:0.78rem; color:var(--text-muted); line-height:1.6;">
+          <strong style="color:var(--text-sub);">Selected Role: </strong><span id="reg-role-display">Buyer</span> — 
+          <span id="reg-role-desc">Access procurement catalog, BIS standards, and submit RFQs.</span>
+        </div>
+        <button type="submit" class="primary-btn" style="margin-top:16px; width:100%; padding:12px;">Register Account</button>
+      </form>
+    </div>
+  </div>
+
   <script src="app.js" type="module"></script>
 </body>
 </html>
