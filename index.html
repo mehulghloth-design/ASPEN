@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ASPEN — AI Procurement Intelligence Platform</title>
+  <!-- Google Fonts: Inter & Outfit -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Outfit:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body class="light-mode">
+  <div class="app-container">
+    
+    <!-- Top Navbar Card -->
+    <header class="app-header">
+      <div class="header-left">
+        <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle Sidebar" style="background:none; border:none; cursor:pointer;">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
+        </button>
+        <span class="logo-text">ASPEN</span>
+        <div class="search-indicator" id="search-indicator" style="display: none; align-items:center; gap:6px; font-size:0.75rem; background:#eff6ff; padding:4px 10px; border-radius:12px; margin-left:12px; color:#1e40af; font-weight:600;">
+          <span class="pulse-dot" style="width:6px; height:6px; background-color:#1e40af; border-radius:50%; display:inline-block;"></span>
+          <span>AI Active</span>
+        </div>
+      </div>
+      
+      <div class="header-right">
+        <!-- Role selector -->
+        <div class="role-selector-wrapper">
+          <label for="role-quick-select" class="sr-only">Select Role</label>
+          <select id="role-quick-select" class="role-quick-select">
+            <option value="public">Guest View</option>
+            <option value="buyer">Buyer Role</option>
+            <option value="seller">Seller Role</option>
+            <option value="admin">Administrator</option>
+          </select>
+        </div>
+
+        <!-- Circle Notification button + dropdown wrapper -->
+        <div class="header-icon-wrapper" style="position:relative;">
+          <button class="circle-icon-btn" id="notifications-trigger" aria-label="Notifications" style="display:flex; align-items:center; justify-content:center; color:#475569; position:relative;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+              <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+            </svg>
+            <!-- Badge: count shown by JS only when > 0 -->
+            <span class="notification-badge" id="notification-badge"></span>
+          </button>
+
+          <!-- Notifications Dropdown — sibling to button, NOT inside it -->
+          <div class="dropdown-menu notifications-dropdown" id="notifications-dropdown">
+            <div class="dropdown-header">
+              <h3>Notifications</h3>
+              <button id="clear-notifications" class="text-btn">Clear All</button>
+            </div>
+            <div class="notifications-list" id="notifications-list">
+              <!-- Dynamically populated -->
+            </div>
+          </div>
+        </div>
+
+        <!-- Circle Profile button + dropdown wrapper -->
+        <div class="header-icon-wrapper" style="position:relative;">
+          <button class="circle-icon-btn" id="profile-trigger" aria-label="Profile Menu" style="display:flex; align-items:center; justify-content:center; color:#475569; font-weight:700;">
+            <span id="profile-avatar-initials">G</span>
+          </button>
+
+          <!-- Profile Dropdown — sibling to button, NOT inside it -->
+          <div class="dropdown-menu profile-dropdown" id="profile-dropdown" style="text-align:left;">
+            <div style="padding:12px; border-bottom:1px solid var(--border-line);">
+              <div id="profile-name" style="font-weight:700; font-size:0.9rem; color:var(--text-main);">Guest User</div>
+              <div id="profile-subtext" style="font-size:0.75rem; color:var(--text-muted);">Sign In</div>
+            </div>
+            <ul class="profile-menu-links">
+              <li>
+                <a href="#" id="menu-settings-btn">
+                  ⚙ Settings
+                </a>
+              </li>
+              <li class="divider"></li>
+              <li>
+                <a href="#" id="auth-action-btn">
+                  <span id="auth-action-text">Login</span>
+                </a>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Sidebar and Content Columns Layout -->
+    <div class="main-columns-layout">
+      
+      <!-- Left Sidebar Card -->
+      <aside class="app-sidebar" id="app-sidebar">
+        <div class="role-badge" id="role-badge">Public Guest</div>
+        
+        <nav class="sidebar-nav" id="sidebar-nav">
+          <!-- Dynamically populated by app.js -->
+        </nav>
+        
+        <button id="theme-toggle-btn" class="sidebar-footer-btn" style="background:none; border:none; width:100%; text-align:left; font-size:0.9rem;">
+          <span id="theme-text">🌙 Dark Mode</span>
+        </button>
+      </aside>
+
+      <!-- Main View Card Slot -->
+      <main class="main-display-card" id="app-content-body">
+        <!-- Rendered dynamically by app.js -->
+      </main>
+
+    </div>
+  </div>
+
+  <!-- Authentication Modal (Login Dialogue) -->
+  <div class="modal-overlay" id="auth-modal">
+    <div class="modal-card">
+      <button class="modal-close" id="auth-modal-close" style="background:none; border:none;">&times;</button>
+      <div class="modal-header-section" style="margin-bottom:20px;">
+        <h2>Access ASPEN Platform</h2>
+        <p>Select your configuration mode credentials to log in.</p>
+      </div>
+      
+      <div class="auth-role-tabs">
+        <button class="auth-tab-btn active" data-role="buyer">Buyer</button>
+        <button class="auth-tab-btn" data-role="seller">Seller</button>
+        <button class="auth-tab-btn" data-role="admin">Admin</button>
+      </div>
+      
+      <form class="auth-form" id="auth-form">
+        <div class="form-group">
+          <label>Organization Email</label>
+          <input type="email" id="auth-email" value="buyer@aspen.gov" required style="padding:10px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+        </div>
+        <div class="form-group">
+          <label>Password / Pin</label>
+          <input type="password" id="auth-password" value="••••••••" required style="padding:10px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+        </div>
+        <button type="submit" class="primary-btn" style="margin-top:10px; width:100%;">Authenticate Identity</button>
+      </form>
+    </div>
+  </div>
+
+  <!-- NLU Search Analysis Modal -->
+  <div class="modal-overlay" id="nlu-modal">
+    <div class="modal-card" style="max-width:600px;">
+      <button class="modal-close" id="nlu-modal-close" style="background:none; border:none;">&times;</button>
+      <div class="modal-header-section" style="margin-bottom:20px;">
+        <h2 style="font-size:1.35rem; margin-bottom:4px;">Intelligent Requirement Analysis</h2>
+        <p>AI engine parsed search query parameters successfully.</p>
+      </div>
+      
+      <div class="nlu-analysis-grid">
+        <div class="nlu-card-item">
+          <span class="nlu-card-label">Identified Product</span>
+          <span class="nlu-card-val" id="nlu-val-product">-</span>
+        </div>
+        <div class="nlu-card-item">
+          <span class="nlu-card-label">Industry Domain</span>
+          <span class="nlu-card-val" id="nlu-val-industry">-</span>
+        </div>
+        <div class="nlu-card-item">
+          <span class="nlu-card-label">Quantity Identified</span>
+          <span class="nlu-card-val" id="nlu-val-quantity">-</span>
+        </div>
+        <div class="nlu-card-item">
+          <span class="nlu-card-label">Application Intent</span>
+          <span class="nlu-card-val" id="nlu-val-application">-</span>
+        </div>
+      </div>
+      
+      <div class="nlu-standards-block" style="margin-top:20px; text-align:left;">
+        <h3 style="font-size:0.95rem; margin-bottom:10px; color:var(--text-sub);">Applicable Indian Standard</h3>
+        <div id="nlu-standards-container">
+          <!-- Populated by app.js -->
+        </div>
+      </div>
+
+      <div class="modal-footer-actions" id="nlu-actions-container" style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end;">
+        <!-- Tailored options -->
+      </div>
+    </div>
+  </div>
+
+  <!-- BIS Standard Detail Modal -->
+  <div class="modal-overlay" id="bis-detail-modal">
+    <div class="modal-card" style="max-width:600px;">
+      <button class="modal-close" id="bis-detail-close" style="background:none; border:none;">&times;</button>
+      <div class="modal-header-section" style="margin-bottom:20px;">
+        <span class="bis-card-code" id="bis-modal-code">IS 0000</span>
+        <h2 id="bis-modal-title" style="font-size:1.35rem; margin-top:8px; margin-bottom:4px;">Standard Title</h2>
+        <p class="meta-tag" id="bis-modal-industry" style="font-weight:700; font-size:0.8rem;">Segment</p>
+      </div>
+      
+      <div class="bis-detail-tabs" style="display:flex; gap:16px; border-bottom:1px solid var(--border-line); margin-bottom:16px;">
+        <button class="bis-tab-btn active" data-tab="overview" style="background:none; border:none; padding-bottom:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">Overview</button>
+        <button class="bis-tab-btn" data-tab="compliance" style="background:none; border:none; padding-bottom:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">Compliance Details</button>
+        <button class="bis-tab-btn" data-tab="manufacturers" style="background:none; border:none; padding-bottom:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">Certified Manufacturers</button>
+      </div>
+
+      <div class="bis-tab-content active" id="bis-tab-overview">
+        <p id="bis-modal-description" style="font-size:0.88rem; color:var(--text-sub); margin-bottom:16px;">Details...</p>
+        <div class="detail-bullets-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:0.85rem;">
+          <div>
+            <strong style="color:var(--text-muted); display:block; font-size:0.75rem; text-transform:uppercase;">Relevance Target</strong>
+            <span id="bis-modal-relevance" style="font-weight:600;">High</span>
+          </div>
+          <div>
+            <strong style="color:var(--text-muted); display:block; font-size:0.75rem; text-transform:uppercase;">Published Date</strong>
+            <span id="bis-modal-date" style="font-weight:600;">2024</span>
+          </div>
+          <div>
+            <strong style="color:var(--text-muted); display:block; font-size:0.75rem; text-transform:uppercase;">Committee Name</strong>
+            <span id="bis-modal-committee" style="font-weight:600;">TED 14</span>
+          </div>
+          <div>
+            <strong style="color:var(--text-muted); display:block; font-size:0.75rem; text-transform:uppercase;">Directives</strong>
+            <span style="font-weight:600; color:var(--green-text);">Mandatory Standard</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bis-tab-content" id="bis-tab-compliance" style="display:none; font-size:0.88rem;">
+        <div style="display:flex; flex-direction:column; gap:12px;">
+          <div style="display:flex; gap:10px;">
+            <span style="font-weight:700; color:var(--accent-blue-text);">[1]</span>
+            <div>
+              <strong>ISI Marking Requirement</strong>
+              <p style="font-size:0.8rem; color:var(--text-sub);">Must be exhibited on packaging under license certification CM/L.</p>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px;">
+            <span style="font-weight:700; color:var(--accent-blue-text);">[2]</span>
+            <div>
+              <strong>Periodic Testing Auditing</strong>
+              <p style="font-size:0.8rem; color:var(--text-sub);">Independent testing in authorized NABL labs required every 6 months.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="bis-tab-content" id="bis-tab-manufacturers" style="display:none;">
+        <div id="bis-modal-manufacturers-list" style="display:flex; flex-direction:column; gap:8px;">
+          <!-- Certified list dynamic -->
+        </div>
+      </div>
+
+      <div class="modal-footer-actions" style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid var(--border-line); padding-top:16px;">
+        <button class="secondary-btn" id="bis-modal-save-btn">Save Standard Reference</button>
+        <button class="primary-btn" id="bis-modal-download-btn">Download PDF Copy</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js" type="module"></script>
+</body>
+</html>

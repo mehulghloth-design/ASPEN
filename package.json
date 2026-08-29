@@ -1,0 +1,23 @@
+{
+  "name": "aspen-procurement-intelligence",
+  "version": "1.0.0",
+  "description": "AI Procurement Intelligence Platform",
+  "main": "index.html",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "keywords": [
+    "aspen",
+    "procurement",
+    "bis",
+    "nlu",
+    "compliance"
+  ],
+  "author": "Antigravity Agent",
+  "license": "ISC",
+  "devDependencies": {
+    "vite": "^5.0.0"
+  }
+}
