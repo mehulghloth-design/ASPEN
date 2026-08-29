@@ -467,7 +467,8 @@ const NAV_ICONS = {
   bis: `<svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="7.5"/><polyline points="8.5 12 11 14.5 15.5 9.5"/><rect x="10.5" y="1" width="3" height="3" rx="0.5"/><circle cx="21" cy="12" r="1.5"/><rect x="10.5" y="20" width="3" height="3" rx="0.5"/><circle cx="3" cy="12" r="1.5"/></svg>`,
   active: `<svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="5" y="3" width="15" height="18" rx="2"/><line x1="2" y1="6" x2="6" y2="6"/><line x1="2" y1="10" x2="6" y2="10"/><line x1="2" y1="14" x2="6" y2="14"/><line x1="2" y1="18" x2="6" y2="18"/><circle cx="12" cy="9.5" r="2.5"/><path d="M9.2 15c0-1.5 1.2-2.5 2.8-2.5s2.8 1 2.8 2.5"/><line x1="9" y1="18" x2="15" y2="18"/></svg>`,
   products: `<svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"/><polyline points="3.27 6.96 12 12.01 20.73 6.96"/><line x1="12" y1="22.08" x2="12" y2="12"/></svg>`,
-  settings: `<svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`
+  settings: `<svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>`,
+  register: `<svg class="nav-icon-svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><line x1="19" y1="8" x2="19" y2="14"/><line x1="22" y1="11" x2="16" y2="11"/></svg>`
 };
 
 function renderSidebarNav() {
@@ -482,6 +483,7 @@ function renderSidebarNav() {
       { id: 'categories', label: 'Categories', icon: NAV_ICONS.categories },
       { id: 'active', label: 'Active', icon: NAV_ICONS.active },
       { id: 'bis', label: 'BIS', icon: NAV_ICONS.bis },
+      { id: 'register', label: 'Register', icon: NAV_ICONS.register },
       { id: 'settings', label: 'Settings', icon: NAV_ICONS.settings }
     ];
   } else if (currentUser.role === 'buyer') {
@@ -489,14 +491,16 @@ function renderSidebarNav() {
       { id: 'home', label: 'Home', icon: NAV_ICONS.home },
       { id: 'categories', label: 'Categories', icon: NAV_ICONS.categories },
       { id: 'active', label: 'Active', icon: NAV_ICONS.active },
-      { id: 'bis', label: 'BIS', icon: NAV_ICONS.bis }
+      { id: 'bis', label: 'BIS', icon: NAV_ICONS.bis },
+      { id: 'register', label: 'Register', icon: NAV_ICONS.register }
     ];
   } else if (currentUser.role === 'seller') {
     menuItems = [
       { id: 'home', label: 'Home', icon: NAV_ICONS.home },
       { id: 'my-products', label: 'Products', icon: NAV_ICONS.products },
       { id: 'active', label: 'Opportunities', icon: NAV_ICONS.active },
-      { id: 'bis', label: 'BIS', icon: NAV_ICONS.bis }
+      { id: 'bis', label: 'BIS', icon: NAV_ICONS.bis },
+      { id: 'register', label: 'Register', icon: NAV_ICONS.register }
     ];
   } else if (currentUser.role === 'admin') {
     menuItems = [
@@ -504,6 +508,7 @@ function renderSidebarNav() {
       { id: 'admin-users', label: 'Users', icon: NAV_ICONS.active },
       { id: 'bis', label: 'BIS', icon: NAV_ICONS.bis },
       { id: 'categories', label: 'Categories', icon: NAV_ICONS.categories },
+      { id: 'register', label: 'Register', icon: NAV_ICONS.register },
       { id: 'settings', label: 'Settings', icon: NAV_ICONS.settings }
     ];
   }
@@ -585,6 +590,9 @@ function renderPageContent(pageId) {
       } else {
         navigateTo('home');
       }
+      break;
+    case 'register':
+      renderRegisterPage(content);
       break;
     case 'settings':
       renderSettingsPage(content);
@@ -1892,6 +1900,79 @@ function renderBISPage(container) {
 }
 
 // ==========================================================================
+// 12.5 REGISTER PAGE
+// ==========================================================================
+
+function renderRegisterPage(container) {
+  container.innerHTML = `
+    <div class="page-title-area">
+      <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
+        <button class="app-back-btn" onclick="window.navigateBackGlobal()" style="padding:5px 14px; font-size:0.8rem;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <span>Back</span>
+        </button>
+        <h1 style="margin:0;">Account Registration</h1>
+      </div>
+      <p>Select an account type below to register for specialized platform capabilities and workflows.</p>
+    </div>
+
+    <!-- Registration cards grid -->
+    <div class="card" style="max-width:720px; display:flex; flex-direction:column; gap:1.2rem; margin-bottom:1.5rem;">
+      <p class="settings-section-title">Available Portal Accounts</p>
+
+      <div class="settings-reg-grid">
+        <!-- Buyer Card -->
+        <div class="settings-reg-card" style="--card-accent:#3b82f6; --card-icon-bg:#dbeafe;" id="reg-card-buyer">
+          <div class="reg-card-icon">🏢</div>
+          <div class="reg-card-title">Register as Buyer</div>
+          <div class="reg-card-desc">Access procurement catalog, submit RFQs, and track BIS-certified vendors.</div>
+          <button class="reg-card-btn" id="reg-btn-buyer">
+            Register Now →
+          </button>
+        </div>
+
+        <!-- Seller Card -->
+        <div class="settings-reg-card" style="--card-accent:#10b981; --card-icon-bg:#d1fae5;" id="reg-card-seller">
+          <div class="reg-card-icon">🏭</div>
+          <div class="reg-card-title">Register as Seller</div>
+          <div class="reg-card-desc">List your certified products, manage BIS certifications, and respond to buyer RFQs.</div>
+          <button class="reg-card-btn" style="color:#10b981;" id="reg-btn-seller">
+            Register Now →
+          </button>
+        </div>
+
+        <!-- Admin Card -->
+        <div class="settings-reg-card" style="--card-accent:#8b5cf6; --card-icon-bg:#ede9fe;" id="reg-card-admin">
+          <div class="reg-card-icon">🛡</div>
+          <div class="reg-card-title">Register as Admin</div>
+          <div class="reg-card-desc">Manage platform users, review compliance audits, and oversee vendor certifications.</div>
+          <button class="reg-card-btn" style="color:#8b5cf6;" id="reg-btn-admin">
+            Register Now →
+          </button>
+        </div>
+      </div>
+
+      <div style="background:var(--bg-primary); border-radius:var(--radius-sm); padding:12px 16px; margin-top:0.5rem; font-size:0.82rem; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+        <span>Already have an active account?</span>
+        <button class="secondary-btn" onclick="toggleModal('auth-modal', true)" style="font-size:0.8rem; padding:5px 14px;">Sign In to ASPEN</button>
+      </div>
+    </div>
+  `;
+
+  // Bind registration card buttons
+  ['buyer', 'seller', 'admin'].forEach(role => {
+    const btn = container.querySelector(`#reg-btn-${role}`);
+    const card = container.querySelector(`#reg-card-${role}`);
+    if (btn) btn.addEventListener('click', () => openRegisterModal(role));
+    if (card) card.addEventListener('click', (e) => {
+      if (e.target === card || e.target.className === 'reg-card-icon' || e.target.className === 'reg-card-title' || e.target.className === 'reg-card-desc') {
+        openRegisterModal(role);
+      }
+    });
+  });
+}
+
+// ==========================================================================
 // 13. SETTINGS PAGE
 // ==========================================================================
 
@@ -1907,7 +1988,7 @@ function renderSettingsPage(container) {
         </button>
         <h1 style="margin:0;">Settings</h1>
       </div>
-      <p>Manage your account, registration, and platform preferences.</p>
+      <p>Manage your account preferences and session settings.</p>
     </div>
 
     <!-- Account section -->
@@ -1957,46 +2038,13 @@ function renderSettingsPage(container) {
       </div>
     </div>
 
-    <!-- Registration cards -->
-    <div class="card" style="max-width:660px; display:flex; flex-direction:column; gap:1rem; margin-bottom:1.5rem;">
-      <p class="settings-section-title">Register on Platform</p>
-      <p style="font-size:0.82rem; color:var(--text-muted); margin-top:-0.25rem;">Create a new account to access role-specific features on ASPEN.</p>
-
-      <div class="settings-reg-grid">
-        <!-- Buyer Card -->
-        <div class="settings-reg-card" style="--card-accent:#3b82f6; --card-icon-bg:#dbeafe;" id="reg-card-buyer">
-          <div class="reg-card-icon">🏢</div>
-          <div class="reg-card-title">Register as Buyer</div>
-          <div class="reg-card-desc">Access procurement catalog, submit RFQs, and track BIS-certified vendors.</div>
-          <button class="reg-card-btn" id="reg-btn-buyer">
-            Register Now →
-          </button>
-        </div>
-
-        <!-- Seller Card -->
-        <div class="settings-reg-card" style="--card-accent:#10b981; --card-icon-bg:#d1fae5;" id="reg-card-seller">
-          <div class="reg-card-icon">🏭</div>
-          <div class="reg-card-title">Register as Seller</div>
-          <div class="reg-card-desc">List your certified products, manage BIS certifications, and respond to buyer RFQs.</div>
-          <button class="reg-card-btn" style="color:#10b981;" id="reg-btn-seller">
-            Register Now →
-          </button>
-        </div>
-
-        <!-- Admin Card -->
-        <div class="settings-reg-card" style="--card-accent:#8b5cf6; --card-icon-bg:#ede9fe;" id="reg-card-admin">
-          <div class="reg-card-icon">🛡</div>
-          <div class="reg-card-title">Register as Admin</div>
-          <div class="reg-card-desc">Manage platform users, review compliance audits, and oversee vendor certifications.</div>
-          <button class="reg-card-btn" style="color:#8b5cf6;" id="reg-btn-admin">
-            Register Now →
-          </button>
-        </div>
+    <!-- Registration Redirect Banner -->
+    <div class="card" style="max-width:660px; display:flex; justify-content:space-between; align-items:center; gap:16px; margin-bottom:1.5rem;">
+      <div>
+        <strong style="font-size:0.9rem; display:block; margin-bottom:2px;">Need to register a new role account?</strong>
+        <span style="font-size:0.78rem; color:var(--text-muted);">Switch to Buyer, Seller, or Administrator profiles via the Register section.</span>
       </div>
-
-      <p style="font-size:0.75rem; color:var(--text-muted); margin-top:0.25rem;">
-        Already have an account? Use the <strong>Login</strong> button from the profile menu in the top-right corner.
-      </p>
+      <button class="secondary-btn" onclick="navigateTo('register')" style="white-space:nowrap; font-size:0.82rem;">Go to Register →</button>
     </div>
 
     <!-- Logout -->
@@ -2020,18 +2068,6 @@ function renderSettingsPage(container) {
       </p>
     </div>`}
   `;
-
-  // Bind registration card buttons
-  ['buyer', 'seller', 'admin'].forEach(role => {
-    const btn = container.querySelector(`#reg-btn-${role}`);
-    const card = container.querySelector(`#reg-card-${role}`);
-    if (btn) btn.addEventListener('click', () => openRegisterModal(role));
-    if (card) card.addEventListener('click', (e) => {
-      if (e.target === card || e.target.className === 'reg-card-icon' || e.target.className === 'reg-card-title' || e.target.className === 'reg-card-desc') {
-        openRegisterModal(role);
-      }
-    });
-  });
 
   // Bind logout button
   const logoutBtn = container.querySelector('#settings-logout-btn');
