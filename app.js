@@ -232,7 +232,21 @@ const MOCK_NOTIFICATIONS = [
 // 2. STATE VARIABLES
 // ==========================================================================
 
-let currentUser = MOCK_USERS.public;
+// Restore saved role and session from localStorage (default to buyer so full search & role features are ready)
+const savedRole = localStorage.getItem('aspen_role') || 'buyer';
+let currentUser = MOCK_USERS[savedRole] || MOCK_USERS.buyer;
+try {
+  const savedUserJson = localStorage.getItem('aspen_user');
+  if (savedUserJson) {
+    const parsedUser = JSON.parse(savedUserJson);
+    if (parsedUser && parsedUser.role) {
+      currentUser = parsedUser;
+    }
+  }
+} catch (e) {
+  console.warn('Failed to parse saved user from localStorage:', e);
+}
+
 let activePage = 'home';
 let notifications = [...MOCK_NOTIFICATIONS];
 let systemAuditLogs = [...MOCK_AUDIT_LOGS];
@@ -1029,15 +1043,21 @@ function toggleTheme() {
 }
 
 function switchRole(role) {
-  currentUser = MOCK_USERS[role];
+  currentUser = MOCK_USERS[role] || MOCK_USERS.buyer;
+  
+  // Persist selected role and user session to localStorage
+  localStorage.setItem('aspen_role', role);
+  localStorage.setItem('aspen_user', JSON.stringify(currentUser));
   
   // Set dropdown indicator select sync
-  document.getElementById('role-quick-select').value = role;
+  const roleSelect = document.getElementById('role-quick-select');
+  if (roleSelect) roleSelect.value = role;
   
   // Clear search results
   parsedSearchResult = null;
   
   updateRoleIdentityUI();
+  renderSidebarNav();
   
   // Create audit log event
   addAuditLog(currentUser.email, `Switched dashboard perspective to ${role.toUpperCase()} mode.`);
@@ -1648,7 +1668,18 @@ function renderHomePage(container) {
   } 
   else if (role === 'seller') {
     homeWrapper.innerHTML = `
-      <div class="seller-opp-section">
+      <h1 class="home-title">${t('what_procure')}</h1>
+      
+      <div class="pill-search-bar-wrapper">
+        <svg class="search-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
+        </svg>
+        <input type="text" id="main-search-input" class="pill-search-input" placeholder="${t('search_placeholder')}" value="${currentSearchQuery}">
+      </div>
+      
+      <button id="search-action-btn-trigger" class="navy-analyze-btn">${t('analyze_btn')}</button>
+
+      <div class="seller-opp-section" style="margin-top:1.5rem;">
         <h2 class="seller-opp-title">${t('new_opp_title')}</h2>
         
         <div class="opp-rows-container">
