@@ -2614,6 +2614,8 @@ window.submitSellerBidGlobal = (rfqId) => {
 // ==========================================================================
 
 function renderAdminDashboard(container) {
+  container.innerHTML = '';
+
   // Statistics Row
   const statsRow = document.createElement('div');
   statsRow.className = 'stats-row';
