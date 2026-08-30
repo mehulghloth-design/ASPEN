@@ -343,6 +343,76 @@ body.dark-mode .circle-icon-btn {
   gap: 20px;
   align-items: stretch;
   flex: 1;
+  transition: grid-template-columns 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Sidebar Collapse Toggle Button */
+.sidebar-collapse-btn {
+  background: var(--bg-canvas);
+  border: 1px solid var(--border-line);
+  color: var(--text-muted);
+  border-radius: var(--radius-sm);
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  flex-shrink: 0;
+}
+
+.sidebar-collapse-btn:hover {
+  background: var(--bg-card);
+  color: var(--text-main);
+  border-color: var(--accent-navy);
+}
+
+.collapse-icon-svg {
+  transition: transform 0.28s ease;
+}
+
+/* Collapsed / Folded Sidebar Styles */
+body.sidebar-folded .main-columns-layout {
+  grid-template-columns: 74px 1fr;
+}
+
+body.sidebar-folded .app-sidebar {
+  padding: 24px 10px;
+  align-items: center;
+}
+
+body.sidebar-folded .role-badge {
+  display: none !important;
+}
+
+body.sidebar-folded .sidebar-top-row {
+  justify-content: center !important;
+  width: 100% !important;
+}
+
+body.sidebar-folded .collapse-icon-svg {
+  transform: rotate(180deg);
+}
+
+body.sidebar-folded .nav-item span {
+  display: none !important;
+}
+
+body.sidebar-folded .nav-item {
+  padding: 12px 0;
+  justify-content: center;
+  width: 100%;
+}
+
+body.sidebar-folded #theme-text {
+  display: none !important;
+}
+
+body.sidebar-folded .sidebar-footer-btn {
+  text-align: center;
+  justify-content: center;
+  padding: 10px 0;
 }
 
 /* Sidebar Card */
@@ -357,6 +427,7 @@ body.dark-mode .circle-icon-btn {
   min-height: 520px;
   height: 100%;
   box-sizing: border-box;
+  transition: padding 0.28s ease;
 }
 
 .sidebar-nav {

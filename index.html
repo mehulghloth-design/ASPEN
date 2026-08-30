@@ -110,7 +110,14 @@
       
       <!-- Left Sidebar Card -->
       <aside class="app-sidebar" id="app-sidebar">
-        <div class="role-badge" id="role-badge">Public Guest</div>
+        <div class="sidebar-top-row" style="display:flex; align-items:center; justify-content:space-between; width:100%; margin-bottom:4px;">
+          <div class="role-badge" id="role-badge" style="margin:0;">Public Guest</div>
+          <button class="sidebar-collapse-btn" id="sidebar-collapse-btn" aria-label="Fold Left Bar" title="Fold Left Bar">
+            <svg class="collapse-icon-svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+              <polyline points="15 18 9 12 15 6"/>
+            </svg>
+          </button>
+        </div>
         
         <nav class="sidebar-nav" id="sidebar-nav">
           <a href="#" class="nav-item active" data-page="home">

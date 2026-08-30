@@ -860,6 +860,23 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 
 function initUIComponents() {
+  // Sidebar Collapse / Fold Toggle Handler
+  const collapseBtn = document.getElementById('sidebar-collapse-btn');
+  const isFolded = localStorage.getItem('aspen_sidebar_folded') === 'true';
+  if (isFolded) {
+    document.body.classList.add('sidebar-folded');
+  }
+
+  if (collapseBtn) {
+    collapseBtn.setAttribute('title', isFolded ? 'Expand Left Bar' : 'Fold Left Bar');
+    collapseBtn.addEventListener('click', () => {
+      const folded = document.body.classList.toggle('sidebar-folded');
+      localStorage.setItem('aspen_sidebar_folded', folded ? 'true' : 'false');
+      collapseBtn.setAttribute('title', folded ? 'Expand Left Bar' : 'Fold Left Bar');
+      showToast(folded ? 'Left content bar folded in' : 'Left content bar expanded', 'info');
+    });
+  }
+
   // Theme Toggle Button
   const themeToggleBtn = document.getElementById('theme-toggle-btn');
   themeToggleBtn.addEventListener('click', toggleTheme);
@@ -1523,6 +1540,7 @@ function renderSidebarNav() {
     const navLink = document.createElement('a');
     navLink.className = `nav-item ${activePage === item.id ? 'active' : ''}`;
     navLink.dataset.page = item.id;
+    navLink.title = item.label;
     navLink.innerHTML = `${item.icon || ''}<span>${item.label}</span>`;
     navLink.addEventListener('click', (e) => {
       e.preventDefault();
