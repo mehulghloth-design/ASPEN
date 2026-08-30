@@ -1394,6 +1394,13 @@ let navigationHistory = [];
 let activeCategoryFilter = null;
 
 function navigateTo(pageId, pushToHistory = true) {
+  // Guest View restriction: Public role is kept on Home screen overview
+  if (currentUser.role === 'public' && pageId !== 'home') {
+    showToast('Guest Overview Mode: Please sign in as a Buyer, Seller, or Administrator to access platform features.', 'info');
+    toggleModal('auth-modal', true);
+    pageId = 'home';
+  }
+
   if (pushToHistory && activePage && activePage !== pageId) {
     navigationHistory.push(activePage);
   }
@@ -1461,8 +1468,7 @@ function renderSidebarNav() {
       { id: 'home', label: t('home'), icon: NAV_ICONS.home },
       { id: 'categories', label: t('category'), icon: NAV_ICONS.categories },
       { id: 'bis', label: t('bis_standards'), icon: NAV_ICONS.bis },
-      { id: 'register', label: t('register_tab'), icon: NAV_ICONS.register },
-      { id: 'settings', label: t('settings'), icon: NAV_ICONS.settings }
+      { id: 'register', label: t('register_tab'), icon: NAV_ICONS.register }
     ];
   } else if (currentUser.role === 'buyer') {
     menuItems = [
@@ -1470,7 +1476,8 @@ function renderSidebarNav() {
       { id: 'categories', label: t('category'), icon: NAV_ICONS.categories },
       { id: 'bis', label: t('bis_standards'), icon: NAV_ICONS.bis },
       { id: 'active', label: t('active_tenders'), icon: NAV_ICONS.active },
-      { id: 'register', label: t('register_tab'), icon: NAV_ICONS.register }
+      { id: 'register', label: t('register_tab'), icon: NAV_ICONS.register },
+      { id: 'settings', label: t('settings'), icon: NAV_ICONS.settings }
     ];
   } else if (currentUser.role === 'seller') {
     menuItems = [
@@ -1478,7 +1485,8 @@ function renderSidebarNav() {
       { id: 'categories', label: t('category'), icon: NAV_ICONS.categories },
       { id: 'bis', label: t('bis_standards'), icon: NAV_ICONS.bis },
       { id: 'my-products', label: t('my_products'), icon: NAV_ICONS.products },
-      { id: 'register', label: t('register_tab'), icon: NAV_ICONS.register }
+      { id: 'register', label: t('register_tab'), icon: NAV_ICONS.register },
+      { id: 'settings', label: t('settings'), icon: NAV_ICONS.settings }
     ];
   } else if (currentUser.role === 'admin') {
     menuItems = [
@@ -1922,25 +1930,25 @@ function populateAllSearchResults(results) {
     const score = r.match_metadata?.confidence_score || 85.0;
     const row = document.createElement('div');
     row.className = 'nlu-standard-row';
-    row.style.cssText = 'margin-top:8px; cursor:pointer; transition:all 0.2s ease; display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-line); border-radius:var(--radius-sm); padding:10px 14px; background:#fff;';
+    row.style.cssText = 'margin-top:8px; cursor:pointer; transition:all 0.2s ease; display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-line); border-radius:var(--radius-sm); padding:10px 14px; background:#fff; gap:10px; box-sizing:border-box; width:100%;';
     row.innerHTML = `
-      <div class="nlu-standard-left" style="flex:1;">
-        <div style="display:flex; align-items:center; gap:8px;">
+      <div class="nlu-standard-left" style="flex:1; min-width:0; overflow:hidden;">
+        <div style="display:flex; align-items:center; gap:8px; flex-wrap:wrap;">
           <span class="bis-card-code">${r.is_code}</span>
           <span class="badge ${score >= 80 ? 'badge-success' : 'badge-info'} btn-sm" style="padding:0.1rem 0.5rem;">${score.toFixed(1)}% match</span>
           <span class="badge badge-success btn-sm" style="padding:0.1rem 0.5rem;">${r.match_metadata?.status || 'Active'}</span>
         </div>
         <div style="margin-top:4px;">
-          <div class="bis-card-title" style="font-weight:700; font-size:0.92rem; color:var(--text-main);">${r.title}</div>
-          <div class="bis-card-sub" style="display:flex; align-items:center; gap:8px; margin-top:2px;">
-            <span class="meta-tag" style="font-size:0.75rem;">${r.category}</span>
-            <span style="font-size:0.75rem; color:var(--text-muted);">${buildSpecsDescription(r.specifications).substring(0, 60)}...</span>
+          <div class="bis-card-title" style="font-weight:700; font-size:0.92rem; color:var(--text-main); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${r.title}</div>
+          <div class="bis-card-sub" style="display:flex; align-items:center; gap:8px; margin-top:2px; overflow:hidden;">
+            <span class="meta-tag" style="font-size:0.75rem; flex-shrink:0;">${r.category}</span>
+            <span style="font-size:0.75rem; color:var(--text-muted); text-overflow:ellipsis; overflow:hidden; white-space:nowrap;">${buildSpecsDescription(r.specifications)}</span>
           </div>
         </div>
       </div>
-      <div style="display:flex; gap:8px; align-items:center; margin-left:12px;">
-        <button class="secondary-btn btn-sm nlu-recommend-view-btn" style="white-space:nowrap;">View Details</button>
-        <button class="primary-btn btn-sm nlu-recommend-draft-btn" style="white-space:nowrap; background:linear-gradient(135deg, #2563eb, #1d4ed8);">Draft RFQ</button>
+      <div class="nlu-standard-actions" style="display:flex; gap:6px; align-items:center; flex-shrink:0;">
+        <button class="secondary-btn btn-sm nlu-recommend-view-btn" style="font-size:0.75rem; padding:5px 10px; white-space:nowrap;">View Details</button>
+        <button class="primary-btn btn-sm nlu-recommend-draft-btn" style="font-size:0.75rem; padding:5px 10px; white-space:nowrap; background:linear-gradient(135deg, #2563eb, #1d4ed8);">Draft RFQ</button>
       </div>
     `;
 
@@ -1955,7 +1963,12 @@ function populateAllSearchResults(results) {
     row.querySelector('.nlu-recommend-draft-btn').addEventListener('click', (e) => {
       e.stopPropagation();
       toggleModal('nlu-modal', false);
-      draftSpecificRecommendation(r);
+      if (currentUser.role === 'public') {
+        showToast('Please sign in as a Buyer to draft official RFQs.', 'info');
+        toggleModal('auth-modal', true);
+      } else {
+        draftSpecificRecommendation(r);
+      }
     });
 
     container.appendChild(row);
