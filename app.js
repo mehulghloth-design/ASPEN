@@ -2793,6 +2793,8 @@ function renderSellerOpportunities(container) {
             // Bidding is explicitly allowed if Admin granted exemption (hasAdminOverride) OR if RFQ satisfies BIS standards and Seller is certified
             const biddingAllowed = hasAdminOverride || (satisfiesBIS && isCertifiedMfr);
 
+            const hasSubmittedBid = SYSTEM_RFQ_BIDS[rfq.id] && SYSTEM_RFQ_BIDS[rfq.id].some(b => b.sellerEmail === (currentUser.email || 'seller@aspen.gov.in'));
+
             return `
               <tr>
                 <td class="table-cell-title">${rfq.id}</td>
@@ -2810,9 +2812,12 @@ function renderSellerOpportunities(container) {
                 </td>
                 <td style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
                   <button class="secondary-btn btn-sm" onclick="window.showBISSuitabilityReportGlobal('${rfq.id}')">View BIS Report</button>
-                  <button class="primary-btn btn-sm" ${!biddingAllowed ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} onclick="window.submitSellerBidGlobal('${rfq.id}')">
-                    ${biddingAllowed ? t('submit_bid') : 'Blocked: Awaiting Admin Exemption'}
-                  </button>
+                  ${hasSubmittedBid
+                    ? `<span class="badge badge-success" style="font-size:0.8rem; padding:6px 12px; font-weight:700;">✓ Bid Submitted</span>`
+                    : `<button class="primary-btn btn-sm" ${!biddingAllowed ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} onclick="window.submitSellerBidGlobal('${rfq.id}')">
+                        ${biddingAllowed ? t('submit_bid') : 'Blocked: Awaiting Admin Exemption'}
+                      </button>`
+                  }
                 </td>
               </tr>
             `;
