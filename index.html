@@ -31,6 +31,16 @@
       </div>
       
       <div class="header-right">
+        <!-- Language selector dropdown -->
+        <div class="language-selector-wrapper">
+          <label for="language-select" class="sr-only">Select Language</label>
+          <select id="language-select" class="language-select">
+            <option value="en">🌐 English</option>
+            <option value="hi">🇮🇳 हिंदी (Hindi)</option>
+            <option value="te">🇮🇳 తెలుగు (Telugu)</option>
+          </select>
+        </div>
+
         <!-- Role selector -->
         <div class="role-selector-wrapper">
           <label for="role-quick-select" class="sr-only">Select Role</label>
@@ -142,32 +152,136 @@
     </div>
   </div>
 
-  <!-- Authentication Modal (Login Dialogue) -->
+  <!-- Authentication Modal (Login & Register for Buyer, Seller, Administrator) -->
   <div class="modal-overlay" id="auth-modal">
-    <div class="modal-card">
+    <div class="modal-card" style="max-width: 520px; width: 90%;">
       <button class="modal-close" id="auth-modal-close" style="background:none; border:none;">&times;</button>
-      <div class="modal-header-section" style="margin-bottom:20px;">
-        <h2>Access ASPEN Platform</h2>
-        <p>Select your configuration mode credentials to log in.</p>
+      
+      <div class="modal-header-section" style="margin-bottom:16px;">
+        <h2 id="auth-modal-title" style="font-size:1.4rem; color:var(--text-main);">ASPEN Access Portal</h2>
+        <p id="auth-modal-subtitle" style="font-size:0.85rem; color:var(--text-muted);">Sign in or register your details to authenticate via PostgreSQL database.</p>
       </div>
       
-      <div class="auth-role-tabs">
-        <button class="auth-tab-btn active" data-role="buyer">Buyer</button>
-        <button class="auth-tab-btn" data-role="seller">Seller</button>
-        <button class="auth-tab-btn" data-role="admin">Admin</button>
+      <!-- Mode Toggle: Login vs Register -->
+      <div class="auth-mode-toggle">
+        <button type="button" class="auth-mode-btn active" id="auth-mode-login">Login</button>
+        <button type="button" class="auth-mode-btn" id="auth-mode-register">Register</button>
+      </div>
+
+      <!-- Database Connection Status Badge -->
+      <div class="db-status-banner" id="db-status-banner">
+        <span class="db-dot"></span>
+        <span id="db-status-text">Connected to PostgreSQL: <strong>ASPEN Log</strong></span>
+      </div>
+
+      <!-- Alert Notification Message Box -->
+      <div class="auth-alert" id="auth-alert" style="display:none;"></div>
+
+      <!-- Role Tabs (Buyer, Seller, Administrator) -->
+      <div class="auth-role-tabs-wrapper">
+        <span class="auth-role-label">Role:</span>
+        <div class="auth-role-tabs">
+          <button type="button" class="auth-tab-btn active" data-role="buyer">🛒 Buyer</button>
+          <button type="button" class="auth-tab-btn" data-role="seller">🏬 Seller</button>
+          <button type="button" class="auth-tab-btn" data-role="admin">⚡ Administrator</button>
+        </div>
       </div>
       
+      <!-- LOGIN FORM -->
       <form class="auth-form" id="auth-form">
         <div class="form-group">
-          <label>Organization Email</label>
-          <input type="email" id="auth-email" value="buyer@aspen.gov" required style="padding:10px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+          <label for="auth-email">Organization Email</label>
+          <input type="email" id="auth-email" value="buyer@aspen.gov" placeholder="name@organization.gov" required style="padding:10px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
         </div>
         <div class="form-group">
-          <label>Password / Pin</label>
-          <input type="password" id="auth-password" value="••••••••" required style="padding:10px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+          <label for="auth-password">Password / Credentials</label>
+          <input type="password" id="auth-password" value="buyer123" placeholder="••••••••" required style="padding:10px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
         </div>
-        <button type="submit" class="primary-btn" style="margin-top:10px; width:100%;">Authenticate Identity</button>
+        
+        <div style="font-size:0.75rem; color:var(--text-muted); margin-bottom:12px; display:flex; justify-content:space-between;">
+          <span>Database: <strong>ASPEN Log (PostgreSQL)</strong></span>
+          <a href="#" id="auth-demo-fill" style="color:var(--primary); font-weight:600; text-decoration:none;">Fill Sample Credentials</a>
+        </div>
+
+        <button type="submit" class="primary-btn" id="auth-submit-btn" style="width:100%; padding:12px; font-weight:700;">Login as Buyer</button>
       </form>
+
+      <!-- REGISTRATION FORM -->
+      <form class="auth-form" id="register-form" style="display:none;">
+        <div class="form-group">
+          <label for="reg-fullname">Full Name *</label>
+          <input type="text" id="reg-fullname" placeholder="e.g. Rajesh Kumar" required style="padding:9px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+        </div>
+        
+        <div class="form-row" style="display:flex; gap:10px;">
+          <div class="form-group" style="flex:1;">
+            <label for="reg-email">Email Address *</label>
+            <input type="email" id="reg-email" placeholder="user@domain.com" required style="padding:9px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label for="reg-phone">Phone Number</label>
+            <input type="tel" id="reg-phone" placeholder="+91 98765 43210" style="padding:9px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+          </div>
+        </div>
+
+        <div class="form-row" style="display:flex; gap:10px;">
+          <div class="form-group" style="flex:1;">
+            <label for="reg-password">Password *</label>
+            <input type="password" id="reg-password" placeholder="Create password" required style="padding:9px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+          </div>
+          <div class="form-group" style="flex:1;">
+            <label for="reg-org" id="reg-org-label">Organization / Ministry</label>
+            <input type="text" id="reg-org" placeholder="e.g. Ministry of Industry" style="padding:9px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+          </div>
+        </div>
+
+        <!-- Role-Specific Extra Fields -->
+        <div id="role-fields-buyer" class="role-specific-fields">
+          <div class="form-row" style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label for="reg-buyer-dept">Department / Division</label>
+              <input type="text" id="reg-buyer-dept" placeholder="Central Procurement" style="padding:9px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label for="reg-buyer-authority">Authority Clearance Level</label>
+              <select id="reg-buyer-authority" style="padding:9px; border:1px solid var(--border-line); border-radius:var(--radius-sm); width:100%;">
+                <option value="Level 1 (Standard)">Level 1 (Standard)</option>
+                <option value="Level 2 (Executive)">Level 2 (Executive)</option>
+                <option value="Level 3 (Directorate)">Level 3 (Directorate)</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div id="role-fields-seller" class="role-specific-fields" style="display:none;">
+          <div class="form-row" style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label for="reg-seller-gstin">GSTIN / Business Reg No *</label>
+              <input type="text" id="reg-seller-gstin" placeholder="e.g. 07AAAAA0000A1Z5" style="padding:9px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label for="reg-seller-category">Supply Category</label>
+              <input type="text" id="reg-seller-category" placeholder="Raw Materials & Hardware" style="padding:9px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+            </div>
+          </div>
+        </div>
+
+        <div id="role-fields-admin" class="role-specific-fields" style="display:none;">
+          <div class="form-row" style="display:flex; gap:10px;">
+            <div class="form-group" style="flex:1;">
+              <label for="reg-admin-empid">Admin Employee ID *</label>
+              <input type="text" id="reg-admin-empid" placeholder="e.g. ADM-9021" style="padding:9px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+            </div>
+            <div class="form-group" style="flex:1;">
+              <label for="reg-admin-passcode">Admin Auth Pin *</label>
+              <input type="password" id="reg-admin-passcode" placeholder="Authorization Pin" style="padding:9px; border:1px solid var(--border-line); border-radius:var(--radius-sm);">
+            </div>
+          </div>
+        </div>
+
+        <button type="submit" class="primary-btn" id="reg-submit-btn" style="width:100%; padding:12px; font-weight:700; margin-top:8px; background:linear-gradient(135deg, #2563eb, #1d4ed8);">Register Buyer Account in PostgreSQL</button>
+      </form>
+
     </div>
   </div>
 

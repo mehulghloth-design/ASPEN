@@ -3,6 +3,19 @@
    ========================================================================== */
 
 // ==========================================================================
+// 0. API CONFIGURATION (Auto-detects local vs deployed environment)
+// ==========================================================================
+
+// Change this to your Railway backend URL after deployment:
+// e.g. 'https://aspen-backend-production.up.railway.app'
+const RAILWAY_BACKEND_URL = '';
+
+const API_BASE_URL = RAILWAY_BACKEND_URL ||
+  (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+    ? 'http://localhost:5001'
+    : '');  // Same-origin if self-hosted
+
+// ==========================================================================
 // 1. MOCK DATABASES & CONFIG
 // ==========================================================================
 
@@ -181,6 +194,594 @@ let notifications = [...MOCK_NOTIFICATIONS];
 let systemAuditLogs = [...MOCK_AUDIT_LOGS];
 let currentSearchQuery = '';
 let parsedSearchResult = null;
+let currentLang = localStorage.getItem('aspen_lang') || 'en';
+
+// ==========================================================================
+// MULTI-LANGUAGE TRANSLATION DICTIONARY (English, Hindi, Telugu)
+// ==========================================================================
+
+const TRANSLATIONS = {
+  en: {
+    app_title: "ASPEN — AI Procurement Intelligence Platform",
+    ai_active: "AI Active",
+    guest_view: "Guest View",
+    buyer_role: "Buyer Role",
+    seller_role: "Seller Role",
+    admin_role: "Administrator",
+    home: "Home",
+    bis_standards: "BIS Standards",
+    vendor_directory: "Vendor Directory",
+    compliance_suite: "Compliance Suite",
+    audit_logs: "Audit Logs",
+    settings: "Settings",
+    back: "Back",
+    hero_title: "AI Procurement & Standard Intelligence",
+    hero_subtitle: "Instant BIS compliance verification, natural language requirement search, and PostgreSQL authenticated procurement portal.",
+    search_placeholder: "Search product name, BIS standard (e.g. IS 758) or category...",
+    search_btn: "Analyze Requirement",
+    access_portal: "ASPEN Access Portal",
+    login_tab: "Login",
+    register_tab: "Register",
+    connected_pg: "Connected to PostgreSQL: ASPEN Log",
+    login_btn_buyer: "Login as Buyer",
+    login_btn_seller: "Login as Seller",
+    login_btn_admin: "Login as Administrator",
+    reg_btn_buyer: "Register Buyer Account in PostgreSQL",
+    reg_btn_seller: "Register Seller Account in PostgreSQL",
+    reg_btn_admin: "Register Admin Account in PostgreSQL",
+    full_name: "Full Name",
+    email_addr: "Email Address",
+    phone_num: "Phone Number",
+    password: "Password",
+    org_name: "Organization / Ministry",
+    company_name: "Company / Business Name",
+    dept_agency: "Department / Agency Name",
+    gstin: "GSTIN / Business Reg No",
+    category: "Supply Category",
+    emp_id: "Admin Employee ID",
+    auth_pin: "Admin Auth Pin",
+    switched_lang: "Language updated to English",
+    what_procure: "What do you need to procure?",
+    describe_need: "Describe what you need",
+    natural_lang_placeholder: "Describe your requirement in natural language...",
+    buyer_placeholder: "We need 10,000 industrial water pumps...",
+    analyze_btn: "Analyze",
+    popular_categories: "Popular Categories",
+    cat_medical: "Medical",
+    cat_electrical: "Electrical",
+    cat_mechanical: "Mechanical",
+    cat_lab: "Lab",
+    cat_construction: "Construction",
+    ai_tip: "AI Tip: \"We need 5,000 water pumps for municipal use.\"",
+    standards_widget: "Standards",
+    specification_widget: "Specification",
+    manufacturers_widget: "Manufacturers",
+    new_opp_title: "New Procurement Opportunities",
+    opp_cotton: "Cotton Bandage Cloth",
+    opp_cotton_meta: "Match 96% • Government Hospital",
+    opp_glass: "Laboratory Glass Tubes",
+    opp_glass_meta: "Match 91% • Research Institute",
+    active_rfqs_widget: "Active RFQs",
+    bis_status_widget: "BIS Status",
+    capacity_widget: "Capacity",
+    my_requirements: "My Active Requirements",
+    track_rfqs: "Track RFQs",
+    bids_received: "Bids Received",
+    cert_status: "Certification Status",
+    products_btn: "Products",
+    bis_highlight: "BIS Highlight",
+    browse_registry: "Browse Registry",
+    my_rfqs: "My Procurement RFQs",
+    rfq_page_sub: "Manage and audit bids received against your active procurement standards.",
+    create_req: "Create Requirement",
+    rfq_id: "RFQ ID",
+    requirement_details: "Requirement Details",
+    required_standard: "Required Standard",
+    qty_requested: "Quantity Requested",
+    date_published: "Date Published",
+    bids_count: "Bids Received",
+    tender_status: "Tender Status",
+    my_portfolio: "My Manufacturing Portfolio",
+    portfolio_sub: "List and verify your products against national BIS standards to unlock active opportunities.",
+    register_product: "Register New Product",
+    product_code: "Product Code",
+    product_designation: "Product Designation",
+    audit_standard: "Audit Standard",
+    registry_code: "National Registry Code",
+    compliance_status: "Compliance Status",
+    active_tenders: "Active Bidding Tenders",
+    active_tenders_sub: "Browse active government requirements matching your certified standard capabilities.",
+    required_product: "Required Product",
+    qty_slated: "Quantity Slated",
+    bid_close_date: "Bidding Close Date",
+    std_qualification: "Your Standard Qualification",
+    action: "Action",
+    qualified_mfr: "✓ Qualified Manufacturer",
+    std_uncertified: "✗ Standard Uncertified",
+    submit_bid: "Submit Compliant Bid",
+    pending_verifications: "Pending Verifications",
+    active_rfqs_label: "Active RFQs",
+    total_bis_codes: "Total BIS Codes",
+    system_perf: "System Performance",
+    audits_slated: "↑ Audits Slated",
+    bidding_active: "↑ Bidding Active",
+    active_registry: "Active Registry",
+    sla_compliant: "↑ SLA Compliant",
+    monthly_audit_chart: "Monthly Verification Bids Audited",
+    year_overview: "2026 Year Overview",
+    active_system_logs: "Active System Logs",
+    view_logs: "View Logs",
+    profile_ver_registry: "Profile Verification Registry",
+    profile_ver_sub: "Review and verify identities for government purchasing officers and supplier organizations.",
+    buyer_apps_pending: "Buyer Applications Pending Review",
+    seller_apps_pending: "Seller Applications Pending Review",
+    approved_btn: "Approved",
+    verify_btn: "Verify",
+    procurement_analytics: "Procurement & Compliance Analytics",
+    analytics_sub: "Performance tracking metrics, standards validation logs, and activity index metrics.",
+    total_vol_searched: "Total Volume Searched",
+    std_match_rate: "Standards Audit Match Rate",
+    unique_mfrs: "Unique Bidding Manufacturers",
+    ai_match_title: "AI Natural Language Matching Accuracy by Segment",
+    audit_page_title: "System Cryptographic Audit Logs",
+    audit_page_sub: "Secure audit trails tracking dashboard transitions, verifications, registry modifications, and security overrides.",
+    registered_events: "Registered Events",
+    clear_security_log: "Clear Security Log",
+    product_catalog_title: "Product & Component Catalog",
+    product_catalog_sub: "Browse active procurement inventories mapping directly to validated standard requirements.",
+    segment_filter: "Segment Filter",
+    all_categories: "All Categories",
+    availability: "Availability",
+    all_stocks: "All Stocks",
+    in_stock_only: "In Stock Only",
+    search_products_placeholder: "Search standard products...",
+    manufacturer: "Manufacturer",
+    stock_status: "Stock Status",
+    audit_compliance_btn: "Audit Compliance",
+    no_products: "No products match selected audit parameters.",
+    bis_page_title: "National Indian Standards Registry (BIS)",
+    bis_page_sub: "Search official Bureau of Indian Standards (IS) certifications, directives, and verified manufacturer databases.",
+    industrial_domain: "Industrial Domain",
+    all_domains: "All Domains",
+    search_bis_placeholder: "Search by Standard code or title...",
+    mandatory_standard: "Mandatory Standard",
+    view_protocol_btn: "View Verification Protocol",
+    account_reg_title: "Account Registration",
+    account_reg_sub: "Select an account type below to register for specialized platform capabilities and workflows.",
+    available_accounts: "Available Portal Accounts",
+    reg_as_buyer: "Register as Buyer",
+    reg_as_buyer_desc: "Access procurement catalog, submit RFQs, and track BIS-certified vendors.",
+    reg_as_seller: "Register as Seller",
+    reg_as_seller_desc: "List your certified products, manage BIS certifications, and respond to buyer RFQs.",
+    reg_as_admin: "Register as Admin",
+    reg_as_admin_desc: "Manage platform users, review compliance audits, and oversee vendor certifications.",
+    register_now: "Register Now →",
+    already_have_account: "Already have an active account?",
+    sign_in_aspen: "Sign In to ASPEN",
+    settings_title: "Settings",
+    settings_sub: "Manage your account preferences and session settings.",
+    current_account: "Current Account",
+    account_name: "Account Name",
+    organization: "Organization",
+    logout_session: "Logout & End Session",
+    nlu_modal_title: "Intelligent Requirement Analysis",
+    nlu_modal_sub: "AI engine parsed search query parameters successfully.",
+    nlu_close: "Close Analysis",
+    nlu_sign_in: "Sign In to Procure",
+    nlu_save_req: "Save Requirement",
+    nlu_draft_rfq: "Draft Official RFQ",
+    nlu_view_tenders: "View Active Tenders",
+    nlu_edit_std: "Edit Associated Standard"
+  },
+  hi: {
+    app_title: "ASPEN — एआई खरीद बुद्धिमत्ता मंच",
+    ai_active: "एआई सक्रिय",
+    guest_view: "अतिथि दृष्टिकोण",
+    buyer_role: "खरीदार भूमिका",
+    seller_role: "विक्रेता भूमिका",
+    admin_role: "प्रशासक भूमिका",
+    home: "मुख्य पृष्ठ",
+    bis_standards: "बीआईएस मानक",
+    vendor_directory: "विक्रेता निर्देशिका",
+    compliance_suite: "अनुपालन सुइट",
+    audit_logs: "ऑडिट लॉग",
+    settings: "सेटिंग्स",
+    back: "वापस",
+    hero_title: "एआई खरीद एवं मानक बुद्धिमत्ता मंच",
+    hero_subtitle: "तत्काल बीआईएस अनुपालन सत्यापन, प्राकृतिक भाषा खोज, और पोस्टग्रेएसक्यूएल प्रामाणिक खरीद पोर्टल।",
+    search_placeholder: "उत्पाद का नाम, बीआईएस मानक (जैसे IS 758) या श्रेणी खोजें...",
+    search_btn: "आवश्यकता विश्लेषण करें",
+    access_portal: "ASPEN एक्सेस पोर्टल",
+    login_tab: "लॉगिन",
+    register_tab: "पंजीकरण",
+    connected_pg: "पोस्टग्रेएसक्यूएल से जुड़ा हुआ: ASPEN Log",
+    login_btn_buyer: "खरीदार के रूप में लॉगिन करें",
+    login_btn_seller: "विक्रेता के रूप में लॉगिन करें",
+    login_btn_admin: "प्रशासक के रूप में लॉगिन करें",
+    reg_btn_buyer: "पोस्टग्रेएसक्यूएल में खरीदार खाता पंजीकृत करें",
+    reg_btn_seller: "पोस्टग्रेएसक्यूएल में विक्रेता खाता पंजीकृत करें",
+    reg_btn_admin: "पोस्टग्रेएसक्यूएल में प्रशासक खाता पंजीकृत करें",
+    full_name: "पूरा नाम",
+    email_addr: "ईमेल पता",
+    phone_num: "फ़ोन नंबर",
+    password: "पासवर्ड",
+    org_name: "संगठन / मंत्रालय",
+    company_name: "कंपनी / व्यवसाय का नाम",
+    dept_agency: "विभाग / एजेंसी का नाम",
+    gstin: "जीएसटीआईएन / व्यवसाय पंजीकरण संख्या",
+    category: "आपूर्ति श्रेणी",
+    emp_id: "प्रशासक कर्मचारी आईडी",
+    auth_pin: "प्रशासक प्रमाणीकरण पिन",
+    switched_lang: "भाषा बदलकर हिंदी कर दी गई है",
+    what_procure: "आपको क्या खरीदना है?",
+    describe_need: "अपनी ज़रूरत का वर्णन करें",
+    natural_lang_placeholder: "अपनी आवश्यकता का प्राकृतिक भाषा में वर्णन करें...",
+    buyer_placeholder: "हमें 10,000 औद्योगिक जल पंप चाहिए...",
+    analyze_btn: "विश्लेषण करें",
+    popular_categories: "लोकप्रिय श्रेणियाँ",
+    cat_medical: "चिकित्सा",
+    cat_electrical: "विद्युत",
+    cat_mechanical: "यांत्रिक",
+    cat_lab: "प्रयोगशाला",
+    cat_construction: "निर्माण",
+    ai_tip: "एआई सुझाव: \"नगर पालिका के लिए 5,000 जल पंप चाहिए।\"",
+    standards_widget: "मानक",
+    specification_widget: "विशिष्टता",
+    manufacturers_widget: "निर्माता",
+    new_opp_title: "नए खरीद अवसर",
+    opp_cotton: "कॉटन बैंडेज कपड़ा",
+    opp_cotton_meta: "मिलान 96% • सरकारी अस्पताल",
+    opp_glass: "प्रयोगशाला काँच ट्यूब",
+    opp_glass_meta: "मिलान 91% • शोध संस्थान",
+    active_rfqs_widget: "सक्रिय आरएफक्यू",
+    bis_status_widget: "बीआईएस स्थिति",
+    capacity_widget: "क्षमता",
+    my_requirements: "मेरी सक्रिय आवश्यकताएं",
+    track_rfqs: "आरएफक्यू ट्रैक करें",
+    bids_received: "बोलियाँ प्राप्त",
+    cert_status: "प्रमाणीकरण स्थिति",
+    products_btn: "उत्पाद",
+    bis_highlight: "बीआईएस मुख्य बिंदु",
+    browse_registry: "रजिस्ट्री ब्राउज़ करें",
+    my_rfqs: "मेरी खरीद आरएफक्यू",
+    rfq_page_sub: "अपनी सक्रिय खरीद मानकों के विरुद्ध प्राप्त बोलियों का प्रबंधन और ऑडिट करें।",
+    create_req: "आवश्यकता बनाएं",
+    rfq_id: "आरएफक्यू आईडी",
+    requirement_details: "आवश्यकता विवरण",
+    required_standard: "आवश्यक मानक",
+    qty_requested: "अनुरोधित मात्रा",
+    date_published: "प्रकाशन तिथि",
+    bids_count: "बोलियाँ प्राप्त",
+    tender_status: "निविदा स्थिति",
+    my_portfolio: "मेरा विनिर्माण पोर्टफोलियो",
+    portfolio_sub: "सक्रिय अवसरों को अनलॉक करने के लिए राष्ट्रीय बीआईएस मानकों के विरुद्ध अपने उत्पादों को सूचीबद्ध और सत्यापित करें।",
+    register_product: "नया उत्पाद पंजीकृत करें",
+    product_code: "उत्पाद कोड",
+    product_designation: "उत्पाद पदनाम",
+    audit_standard: "ऑडिट मानक",
+    registry_code: "राष्ट्रीय रजिस्ट्री कोड",
+    compliance_status: "अनुपालन स्थिति",
+    active_tenders: "सक्रिय बोली निविदाएं",
+    active_tenders_sub: "अपनी प्रमाणित मानक क्षमताओं से मेल खाती सक्रिय सरकारी आवश्यकताएं ब्राउज़ करें।",
+    required_product: "आवश्यक उत्पाद",
+    qty_slated: "निर्धारित मात्रा",
+    bid_close_date: "बोली बंद तिथि",
+    std_qualification: "आपकी मानक योग्यता",
+    action: "कार्यवाही",
+    qualified_mfr: "✓ योग्य निर्माता",
+    std_uncertified: "✗ मानक असत्यापित",
+    submit_bid: "अनुपालन बोली जमा करें",
+    pending_verifications: "लंबित सत्यापन",
+    active_rfqs_label: "सक्रिय आरएफक्यू",
+    total_bis_codes: "कुल बीआईएस कोड",
+    system_perf: "सिस्टम प्रदर्शन",
+    audits_slated: "↑ ऑडिट निर्धारित",
+    bidding_active: "↑ बोली सक्रिय",
+    active_registry: "सक्रिय रजिस्ट्री",
+    sla_compliant: "↑ एसएलए अनुपालित",
+    monthly_audit_chart: "मासिक सत्यापन बोलियाँ ऑडिट की गईं",
+    year_overview: "2026 वार्षिक अवलोकन",
+    active_system_logs: "सक्रिय सिस्टम लॉग",
+    view_logs: "लॉग देखें",
+    profile_ver_registry: "प्रोफ़ाइल सत्यापन रजिस्ट्री",
+    profile_ver_sub: "सरकारी क्रय अधिकारियों और आपूर्तिकर्ता संगठनों की पहचान की समीक्षा और सत्यापन करें।",
+    buyer_apps_pending: "खरीदार आवेदन समीक्षाधीन",
+    seller_apps_pending: "विक्रेता आवेदन समीक्षाधीन",
+    approved_btn: "स्वीकृत",
+    verify_btn: "सत्यापित करें",
+    procurement_analytics: "खरीद और अनुपालन विश्लेषण",
+    analytics_sub: "प्रदर्शन ट्रैकिंग मेट्रिक्स, मानक सत्यापन लॉग और गतिविधि इंडेक्स मेट्रिक्स।",
+    total_vol_searched: "कुल मात्रा खोजी गई",
+    std_match_rate: "मानक ऑडिट मिलान दर",
+    unique_mfrs: "अद्वितीय बोली निर्माता",
+    ai_match_title: "खंड अनुसार एआई प्राकृतिक भाषा मिलान सटीकता",
+    audit_page_title: "सिस्टम क्रिप्टोग्राफ़िक ऑडिट लॉग",
+    audit_page_sub: "डैशबोर्ड संक्रमण, सत्यापन, रजिस्ट्री संशोधन और सुरक्षा ओवरराइड को ट्रैक करने वाले सुरक्षित ऑडिट ट्रेल।",
+    registered_events: "पंजीकृत घटनाएं",
+    clear_security_log: "सुरक्षा लॉग साफ़ करें",
+    product_catalog_title: "उत्पाद और घटक कैटलॉग",
+    product_catalog_sub: "सत्यापित मानक आवश्यकताओं से सीधे जुड़ी सक्रिय खरीद सूचियाँ ब्राउज़ करें।",
+    segment_filter: "खंड फ़िल्टर",
+    all_categories: "सभी श्रेणियाँ",
+    availability: "उपलब्धता",
+    all_stocks: "सभी स्टॉक",
+    in_stock_only: "केवल स्टॉक में",
+    search_products_placeholder: "मानक उत्पाद खोजें...",
+    manufacturer: "निर्माता",
+    stock_status: "स्टॉक स्थिति",
+    audit_compliance_btn: "अनुपालन ऑडिट",
+    no_products: "चयनित ऑडिट मापदंडों से कोई उत्पाद मेल नहीं खाता।",
+    bis_page_title: "राष्ट्रीय भारतीय मानक रजिस्ट्री (बीआईएस)",
+    bis_page_sub: "आधिकारिक भारतीय मानक ब्यूरो (IS) प्रमाणपत्र, निर्देश और सत्यापित निर्माता डेटाबेस खोजें।",
+    industrial_domain: "औद्योगिक क्षेत्र",
+    all_domains: "सभी क्षेत्र",
+    search_bis_placeholder: "मानक कोड या शीर्षक द्वारा खोजें...",
+    mandatory_standard: "अनिवार्य मानक",
+    view_protocol_btn: "सत्यापन प्रोटोकॉल देखें",
+    account_reg_title: "खाता पंजीकरण",
+    account_reg_sub: "विशेष प्लेटफ़ॉर्म क्षमताओं के लिए पंजीकरण करने हेतु नीचे एक खाता प्रकार चुनें।",
+    available_accounts: "उपलब्ध पोर्टल खाते",
+    reg_as_buyer: "खरीदार के रूप में पंजीकरण करें",
+    reg_as_buyer_desc: "खरीद कैटलॉग तक पहुंचें, आरएफक्यू जमा करें और बीआईएस-प्रमाणित विक्रेताओं को ट्रैक करें।",
+    reg_as_seller: "विक्रेता के रूप में पंजीकरण करें",
+    reg_as_seller_desc: "अपने प्रमाणित उत्पाद सूचीबद्ध करें, बीआईएस प्रमाणपत्र प्रबंधित करें और खरीदार आरएफक्यू का जवाब दें।",
+    reg_as_admin: "प्रशासक के रूप में पंजीकरण करें",
+    reg_as_admin_desc: "प्लेटफ़ॉर्म उपयोगकर्ताओं का प्रबंधन करें, अनुपालन ऑडिट की समीक्षा करें और विक्रेता प्रमाणन की निगरानी करें।",
+    register_now: "अभी पंजीकरण करें →",
+    already_have_account: "पहले से एक सक्रिय खाता है?",
+    sign_in_aspen: "ASPEN में साइन इन करें",
+    settings_title: "सेटिंग्स",
+    settings_sub: "अपनी खाता प्राथमिकताएं और सत्र सेटिंग्स प्रबंधित करें।",
+    current_account: "वर्तमान खाता",
+    account_name: "खाता नाम",
+    organization: "संगठन",
+    logout_session: "लॉगआउट और सत्र समाप्त करें",
+    nlu_modal_title: "बुद्धिमान आवश्यकता विश्लेषण",
+    nlu_modal_sub: "एआई इंजन ने खोज क्वेरी मापदंडों को सफलतापूर्वक पार्स किया।",
+    nlu_close: "विश्लेषण बंद करें",
+    nlu_sign_in: "खरीदने के लिए साइन इन करें",
+    nlu_save_req: "आवश्यकता सहेजें",
+    nlu_draft_rfq: "आधिकारिक आरएफक्यू का मसौदा तैयार करें",
+    nlu_view_tenders: "सक्रिय निविदाएं देखें",
+    nlu_edit_std: "संबंधित मानक संपादित करें"
+  },
+  te: {
+    app_title: "ASPEN — ఏఐ కొనుగోలు మేధస్సు ప్లాట్‌ఫారమ్",
+    ai_active: "ఏఐ యాక్టివ్",
+    guest_view: "అతిథి వీక్షణ",
+    buyer_role: "కొనుగోలుదారు పాత్ర",
+    seller_role: "విక్రేత పాత్ర",
+    admin_role: "అడ్మినిస్ట్రేటర్",
+    home: "ముఖ్య పేజీ",
+    bis_standards: "బిఐఎస్ ప్రమాణాలు",
+    vendor_directory: "విక్రేతల డైరెక్టరీ",
+    compliance_suite: "సమ్మతి సూట్",
+    audit_logs: "ఆడిట్ లాగ్స్",
+    settings: "సెట్టింగ్‌లు",
+    back: "వెనకకు",
+    hero_title: "ఏఐ సేకరణ మరియు ప్రమాణాల మేధస్సు ప్లాట్‌ఫారమ్",
+    hero_subtitle: "తక్షణ బిఐఎస్ సమ్మతి తనిఖీ, శోధన మరియు పోస్ట్‌గ్రే-ఎస్క్యూఎల్ ప్రామాణీకరించబడిన సేకరణ పోర్టల్.",
+    search_placeholder: "ఉత్పత్తి పేరు, బిఐఎస్ కోడ్ (ఉదా. IS 758) లేదా వర్గం వెతకండి...",
+    search_btn: "అవసర విశ్లేషణ చేయండి",
+    access_portal: "ASPEN యాక్సెస్ పోర్టల్",
+    login_tab: "లాగిన్",
+    register_tab: "రిజిస్ట్రేషన్",
+    connected_pg: "పోస్ట్‌గ్రే-ఎస్క్యూఎల్ కనెక్ట్ చేయబడింది: ASPEN Log",
+    login_btn_buyer: "కొనుగోలుదారుగా లాగిన్ అవ్వండి",
+    login_btn_seller: "విక్రేతగా లాగిన్ అవ్వండి",
+    login_btn_admin: "అడ్మినిస్ట్రేటర్‌గా లాగిన్ అవ్వండి",
+    reg_btn_buyer: "పోస్ట్‌గ్రే-ఎస్క్యూఎల్‌లో కొనుగోలుదారు ఖాతా నమోదు చేయండి",
+    reg_btn_seller: "పోస్ట్‌గ్రే-ఎస్క్యూఎల్‌లో విక్రేత ఖాతా నమోదు చేయండి",
+    reg_btn_admin: "పోస్ట్‌గ్రే-ఎస్క్యూఎల్‌లో అడ్మినిస్ట్రేటర్ ఖాతా నమోదు చేయండి",
+    full_name: "పూర్తి పేరు",
+    email_addr: "ఇమెయిల్ చిరునామా",
+    phone_num: "ఫోన్ నంబర్",
+    password: "పాస్‌వర్డ్",
+    org_name: "సంస్థ / మంత్రిత్వ శాఖ",
+    company_name: "కంపెనీ / వ్యాపారం పేరు",
+    dept_agency: "శాఖ / ఏజెన్సీ పేరు",
+    gstin: "జీఎస్‌టీఐఎన్ / బిజినెస్ రిజిస్ట్రేషన్ నంబర్",
+    category: "సరఫరా వర్గం",
+    emp_id: "అడ్మిన్ ఉద్యోగి ఐడీ",
+    auth_pin: "అడ్మిన్ ప్రామాణీకరణ పిన్",
+    switched_lang: "భాష తెలుగుకి మార్చబడింది",
+    what_procure: "మీకు ఏమి కొనుగోలు చేయాలి?",
+    describe_need: "మీ అవసరాన్ని వివరించండి",
+    natural_lang_placeholder: "మీ అవసరాన్ని సహజ భాషలో వివరించండి...",
+    buyer_placeholder: "మాకు 10,000 పారిశ్రామిక జల పంపులు కావాలి...",
+    analyze_btn: "విశ్లేషించండి",
+    popular_categories: "ప్రముఖ వర్గాలు",
+    cat_medical: "వైద్యం",
+    cat_electrical: "విద్యుత్",
+    cat_mechanical: "యాంత్రిక",
+    cat_lab: "ప్రయోగశాల",
+    cat_construction: "నిర్మాణం",
+    ai_tip: "ఏఐ సూచన: \"నగర పాలనకు 5,000 జల పంపులు కావాలి.\"",
+    standards_widget: "ప్రమాణాలు",
+    specification_widget: "వివరణ",
+    manufacturers_widget: "తయారీదారులు",
+    new_opp_title: "కొత్త సేకరణ అవకాశాలు",
+    opp_cotton: "పత్తి బ్యాండేజ్ వస్త్రం",
+    opp_cotton_meta: "మ్యాచ్ 96% • ప్రభుత్వ ఆసుపత్రి",
+    opp_glass: "ప్రయోగశాల గాజు గొట్టాలు",
+    opp_glass_meta: "మ్యాచ్ 91% • పరిశోధన సంస్థ",
+    active_rfqs_widget: "చురుకైన RFQలు",
+    bis_status_widget: "బిఐఎస్ స్థితి",
+    capacity_widget: "సామర్థ్యం",
+    my_requirements: "నా చురుకైన అవసరాలు",
+    track_rfqs: "RFQలు ట్రాక్ చేయండి",
+    bids_received: "బిడ్లు వచ్చాయి",
+    cert_status: "ధృవీకరణ స్థితి",
+    products_btn: "ఉత్పత్తులు",
+    bis_highlight: "బిఐఎస్ హైలైట్",
+    browse_registry: "రిజిస్ట్రీ బ్రౌజ్ చేయండి",
+    my_rfqs: "నా సేకరణ RFQలు",
+    rfq_page_sub: "మీ చురుకైన సేకరణ ప్రమాణాలకు వ్యతిరేకంగా వచ్చిన బిడ్లను నిర్వహించండి.",
+    create_req: "అవసరం సృష్టించండి",
+    rfq_id: "RFQ ఐడీ",
+    requirement_details: "అవసర వివరాలు",
+    required_standard: "అవసర ప్రమాణం",
+    qty_requested: "అభ్యర్థించిన పరిమాణం",
+    date_published: "ప్రచురణ తేదీ",
+    bids_count: "బిడ్లు వచ్చాయి",
+    tender_status: "టెండర్ స్థితి",
+    my_portfolio: "నా తయారీ పోర్ట్‌ఫోలియో",
+    portfolio_sub: "చురుకైన అవకాశాలను అన్‌లాక్ చేయడానికి జాతీయ బిఐఎస్ ప్రమాణాలకు వ్యతిరేకంగా మీ ఉత్పత్తులను జాబితా చేయండి.",
+    register_product: "కొత్త ఉత్పత్తి నమోదు చేయండి",
+    product_code: "ఉత్పత్తి కోడ్",
+    product_designation: "ఉత్పత్తి హోదా",
+    audit_standard: "ఆడిట్ ప్రమాణం",
+    registry_code: "జాతీయ రిజిస్ట్రీ కోడ్",
+    compliance_status: "సమ్మతి స్థితి",
+    active_tenders: "చురుకైన బిడ్డింగ్ టెండర్లు",
+    active_tenders_sub: "మీ ధృవీకరించబడిన ప్రమాణ సామర్థ్యాలకు సరిపోయే చురుకైన ప్రభుత్వ అవసరాలు బ్రౌజ్ చేయండి.",
+    required_product: "అవసర ఉత్పత్తి",
+    qty_slated: "నిర్ణయించిన పరిమాణం",
+    bid_close_date: "బిడ్ ముగింపు తేదీ",
+    std_qualification: "మీ ప్రమాణ అర్హత",
+    action: "చర్య",
+    qualified_mfr: "✓ అర్హత గల తయారీదారు",
+    std_uncertified: "✗ ప్రమాణం ధృవీకరించబడలేదు",
+    submit_bid: "సమ్మతి బిడ్ సమర్పించండి",
+    pending_verifications: "పెండింగ్ ధృవీకరణలు",
+    active_rfqs_label: "చురుకైన RFQలు",
+    total_bis_codes: "మొత్తం బిఐఎస్ కోడ్‌లు",
+    system_perf: "సిస్టమ్ పనితీరు",
+    audits_slated: "↑ ఆడిట్లు నిర్ణయించబడ్డాయి",
+    bidding_active: "↑ బిడ్డింగ్ చురుకుగా ఉంది",
+    active_registry: "చురుకైన రిజిస్ట్రీ",
+    sla_compliant: "↑ SLA సమ్మతిలో ఉంది",
+    monthly_audit_chart: "నెలవారీ ధృవీకరణ బిడ్లు ఆడిట్ చేయబడ్డాయి",
+    year_overview: "2026 వార్షిక అవలోకనం",
+    active_system_logs: "చురుకైన సిస్టమ్ లాగ్‌లు",
+    view_logs: "లాగ్‌లు చూడండి",
+    profile_ver_registry: "ప్రొఫైల్ ధృవీకరణ రిజిస్ట్రీ",
+    profile_ver_sub: "ప్రభుత్వ కొనుగోలు అధికారులు మరియు సరఫరాదారు సంస్థల గుర్తింపులను సమీక్షించండి.",
+    buyer_apps_pending: "కొనుగోలుదారు దరఖాస్తులు సమీక్షలో ఉన్నాయి",
+    seller_apps_pending: "విక్రేత దరఖాస్తులు సమీక్షలో ఉన్నాయి",
+    approved_btn: "ఆమోదించబడింది",
+    verify_btn: "ధృవీకరించండి",
+    procurement_analytics: "సేకరణ మరియు సమ్మతి విశ్లేషణ",
+    analytics_sub: "పనితీరు ట్రాకింగ్ మెట్రిక్స్, ప్రమాణాల ధృవీకరణ లాగ్‌లు మరియు కార్యాచరణ సూచిక మెట్రిక్స్.",
+    total_vol_searched: "మొత్తం పరిమాణం వెతకబడింది",
+    std_match_rate: "ప్రమాణాల ఆడిట్ మ్యాచ్ రేటు",
+    unique_mfrs: "ప్రత్యేక బిడ్డింగ్ తయారీదారులు",
+    ai_match_title: "విభాగం వారీగా ఏఐ సహజ భాష మ్యాచింగ్ ఖచ్చితత్వం",
+    audit_page_title: "సిస్టమ్ క్రిప్టోగ్రాఫిక్ ఆడిట్ లాగ్‌లు",
+    audit_page_sub: "డ్యాష్‌బోర్డ్ మార్పులు, ధృవీకరణలు, రిజిస్ట్రీ మార్పులు మరియు భద్రతా ఓవర్‌రైడ్‌లను ట్రాక్ చేసే సురక్షిత ఆడిట్ ట్రెయిల్‌లు.",
+    registered_events: "నమోదైన సంఘటనలు",
+    clear_security_log: "భద్రతా లాగ్ క్లియర్ చేయండి",
+    product_catalog_title: "ఉత్పత్తి మరియు భాగాల కేటలాగ్",
+    product_catalog_sub: "ధృవీకరించబడిన ప్రమాణ అవసరాలకు నేరుగా మ్యాపింగ్ అయ్యే చురుకైన సేకరణ జాబితాలు బ్రౌజ్ చేయండి.",
+    segment_filter: "విభాగం ఫిల్టర్",
+    all_categories: "అన్ని వర్గాలు",
+    availability: "అందుబాటు",
+    all_stocks: "అన్ని స్టాక్‌లు",
+    in_stock_only: "స్టాక్‌లో మాత్రమే",
+    search_products_placeholder: "ప్రమాణ ఉత్పత్తులు వెతకండి...",
+    manufacturer: "తయారీదారు",
+    stock_status: "స్టాక్ స్థితి",
+    audit_compliance_btn: "సమ్మతి ఆడిట్",
+    no_products: "ఎంచుకున్న ఆడిట్ మాపదండాలకు ఏ ఉత్పత్తులూ సరిపోలలేదు.",
+    bis_page_title: "జాతీయ భారత ప్రమాణాల రిజిస్ట్రీ (బిఐఎస్)",
+    bis_page_sub: "అధికారిక భారతీయ ప్రమాణాల బ్యూరో (IS) ధృవీకరణలు, నిర్దేశాలు మరియు ధృవీకరించబడిన తయారీదారు డేటాబేస్‌లు వెతకండి.",
+    industrial_domain: "పారిశ్రామిక రంగం",
+    all_domains: "అన్ని రంగాలు",
+    search_bis_placeholder: "ప్రమాణ కోడ్ లేదా శీర్షిక ద్వారా వెతకండి...",
+    mandatory_standard: "తప్పనిసరి ప్రమాణం",
+    view_protocol_btn: "ధృవీకరణ ప్రోటోకాల్ చూడండి",
+    account_reg_title: "ఖాతా నమోదు",
+    account_reg_sub: "విశేష ప్లాట్‌ఫారమ్ సామర్థ్యాల కోసం నమోదు చేయడానికి దిగువన ఒక ఖాతా రకాన్ని ఎంచుకోండి.",
+    available_accounts: "అందుబాటులో ఉన్న పోర్టల్ ఖాతాలు",
+    reg_as_buyer: "కొనుగోలుదారుగా నమోదు చేయండి",
+    reg_as_buyer_desc: "సేకరణ కేటలాగ్‌ను యాక్సెస్ చేయండి, RFQలు సమర్పించండి మరియు బిఐఎస్-ధృవీకరించబడిన విక్రేతలను ట్రాక్ చేయండి.",
+    reg_as_seller: "విక్రేతగా నమోదు చేయండి",
+    reg_as_seller_desc: "మీ ధృవీకరించబడిన ఉత్పత్తులను జాబితా చేయండి, బిఐఎస్ ధృవీకరణలను నిర్వహించండి మరియు కొనుగోలుదారు RFQలకు స్పందించండి.",
+    reg_as_admin: "అడ్మిన్‌గా నమోదు చేయండి",
+    reg_as_admin_desc: "ప్లాట్‌ఫారమ్ వినియోగదారులను నిర్వహించండి, సమ్మతి ఆడిట్‌లను సమీక్షించండి మరియు విక్రేత ధృవీకరణలను పర్యవేక్షించండి.",
+    register_now: "ఇప్పుడు నమోదు చేయండి →",
+    already_have_account: "ఇప్పటికే చురుకైన ఖాతా ఉందా?",
+    sign_in_aspen: "ASPEN లో సైన్ ఇన్ చేయండి",
+    settings_title: "సెట్టింగ్‌లు",
+    settings_sub: "మీ ఖాతా ప్రాధాన్యతలు మరియు సెషన్ సెట్టింగ్‌లను నిర్వహించండి.",
+    current_account: "ప్రస్తుత ఖాతా",
+    account_name: "ఖాతా పేరు",
+    organization: "సంస్థ",
+    logout_session: "లాగ్‌అవుట్ మరియు సెషన్ ముగించండి",
+    nlu_modal_title: "తెలివైన అవసర విశ్లేషణ",
+    nlu_modal_sub: "ఏఐ ఇంజిన్ శోధన క్వెరీ పారామితులను విజయవంతంగా పార్స్ చేసింది.",
+    nlu_close: "విశ్లేషణ మూసివేయండి",
+    nlu_sign_in: "కొనుగోలుకు సైన్ ఇన్ చేయండి",
+    nlu_save_req: "అవసరం సేవ్ చేయండి",
+    nlu_draft_rfq: "అధికారిక RFQ రూపొందించండి",
+    nlu_view_tenders: "చురుకైన టెండర్లు చూడండి",
+    nlu_edit_std: "సంబంధిత ప్రమాణం సవరించండి"
+  }
+};
+
+function t(key) {
+  const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
+  return dict[key] || TRANSLATIONS.en[key] || key;
+}
+
+function setLanguage(lang) {
+  if (!TRANSLATIONS[lang]) return;
+  currentLang = lang;
+  localStorage.setItem('aspen_lang', lang);
+  
+  const langSelect = document.getElementById('language-select');
+  if (langSelect) langSelect.value = lang;
+
+  applyLanguageTranslations();
+  showToast(t('switched_lang'), 'info');
+}
+
+function applyLanguageTranslations() {
+  const dict = TRANSLATIONS[currentLang] || TRANSLATIONS.en;
+
+  // Document Title
+  document.title = dict.app_title;
+
+  // Search input placeholder & search button
+  const searchInput = document.getElementById('global-search-input');
+  if (searchInput) searchInput.placeholder = dict.search_placeholder;
+
+  const searchBtnText = document.getElementById('search-btn-text');
+  if (searchBtnText) searchBtnText.textContent = dict.search_btn;
+
+  // Update Role Selector Dropdown options
+  const roleSelect = document.getElementById('role-quick-select');
+  if (roleSelect) {
+    const opts = roleSelect.options;
+    if (opts[0]) opts[0].textContent = dict.guest_view;
+    if (opts[1]) opts[1].textContent = dict.buyer_role;
+    if (opts[2]) opts[2].textContent = dict.seller_role;
+    if (opts[3]) opts[3].textContent = dict.admin_role;
+  }
+
+  // Update Auth modal texts
+  const modeLoginBtn = document.getElementById('auth-mode-login');
+  if (modeLoginBtn) modeLoginBtn.textContent = dict.login_tab;
+
+  const modeRegisterBtn = document.getElementById('auth-mode-register');
+  if (modeRegisterBtn) modeRegisterBtn.textContent = dict.register_tab;
+
+  const demoFillLink = document.getElementById('auth-demo-fill');
+  if (demoFillLink) demoFillLink.textContent = dict.fill_sample;
+
+  // Update role button text
+  if (typeof setAuthRole === 'function' && currentAuthRole) {
+    setAuthRole(currentAuthRole);
+  }
+
+  // Re-render sidebar to update nav item translations
+  renderSidebarNav();
+
+  // Re-render current page if active
+  if (typeof renderPageContent === 'function' && activePage) {
+    renderPageContent(activePage);
+  }
+}
 
 // ==========================================================================
 // 3. APPLICATION INITIALIZATION & CORE EVENTS
@@ -188,6 +789,7 @@ let parsedSearchResult = null;
 
 document.addEventListener('DOMContentLoaded', () => {
   initUIComponents();
+  applyLanguageTranslations();
   navigateTo('home');
 });
 
@@ -196,12 +798,28 @@ function initUIComponents() {
   const themeToggleBtn = document.getElementById('theme-toggle-btn');
   themeToggleBtn.addEventListener('click', toggleTheme);
 
-  // Role Selector Dropdown
+  // Language Selector Dropdown (Left of Role Selector)
+  const langSelect = document.getElementById('language-select');
+  if (langSelect) {
+    langSelect.value = currentLang;
+    langSelect.addEventListener('change', (e) => {
+      setLanguage(e.target.value);
+    });
+  }
+
+  // Role Selector Dropdown - Opens modal for selected role or switches to guest
   const roleSelect = document.getElementById('role-quick-select');
-  roleSelect.value = currentUser.role;
-  roleSelect.addEventListener('change', (e) => {
-    switchRole(e.target.value);
-  });
+  if (roleSelect) {
+    roleSelect.value = currentUser.role;
+    roleSelect.addEventListener('change', (e) => {
+      const selectedRole = e.target.value;
+      if (selectedRole === 'public') {
+        switchRole('public');
+      } else {
+        openAuthModalForRole(selectedRole, 'login');
+      }
+    });
+  }
 
   // Profile Dropdown Toggle
   const profileTrigger = document.getElementById('profile-trigger');
@@ -257,41 +875,15 @@ function initUIComponents() {
     });
   }
 
-  // Authentication Modal Close
-  document.getElementById('auth-modal-close').addEventListener('click', () => {
-    toggleModal('auth-modal', false);
-  });
-
-  // Authentication Form Submit
-  const authForm = document.getElementById('auth-form');
-  authForm.addEventListener('submit', handleLoginSubmit);
-
-  // Auth Modal Tab Buttons
-  const authTabs = document.querySelectorAll('.auth-tab-btn');
-  authTabs.forEach(tab => {
-    tab.addEventListener('click', () => {
-      authTabs.forEach(btn => btn.classList.remove('active'));
-      tab.classList.add('active');
-      
-      // Update form defaults to match role selection
-      const role = tab.dataset.role;
-      const emailInput = document.getElementById('auth-email');
-      if (role === 'buyer') {
-        emailInput.value = 'buyer@aspen.gov';
-      } else if (role === 'seller') {
-        emailInput.value = 'seller@aspen.gov';
-      } else if (role === 'admin') {
-        emailInput.value = 'admin@aspen.gov';
-      }
-    });
-  });
+  // Setup Auth Modal & Postgres Backend Listeners
+  setupAuthModalEvents();
 
   // Profile trigger authentication trigger fallback
   const authActionBtn = document.getElementById('auth-action-btn');
   authActionBtn.addEventListener('click', (e) => {
     e.preventDefault();
     if (currentUser.role === 'public') {
-      toggleModal('auth-modal', true);
+      openAuthModalForRole('buyer', 'login');
     } else {
       switchRole('public');
     }
@@ -399,13 +991,318 @@ function updateRoleIdentityUI() {
   renderSidebarNav();
 }
 
-function handleLoginSubmit(e) {
-  e.preventDefault();
-  const activeTabBtn = document.querySelector('.auth-role-tabs .auth-tab-btn.active');
-  const selectedRole = activeTabBtn.dataset.role;
+// ==========================================================================
+// AUTHENTICATION & POSTGRESQL API INTEGRATION ENGINE
+// ==========================================================================
+
+let currentAuthRole = 'buyer';
+let currentAuthMode = 'login';
+
+function setupAuthModalEvents() {
+  // Modal Close Trigger
+  const closeBtn = document.getElementById('auth-modal-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => toggleModal('auth-modal', false));
+  }
+
+  // Auth Mode Toggles (Login vs Register)
+  const modeLoginBtn = document.getElementById('auth-mode-login');
+  const modeRegisterBtn = document.getElementById('auth-mode-register');
+
+  if (modeLoginBtn && modeRegisterBtn) {
+    modeLoginBtn.addEventListener('click', () => setAuthMode('login'));
+    modeRegisterBtn.addEventListener('click', () => setAuthMode('register'));
+  }
+
+  // Role Switcher Tabs (Buyer, Seller, Admin)
+  const authTabs = document.querySelectorAll('.auth-tab-btn');
+  authTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      const role = tab.dataset.role;
+      setAuthRole(role);
+    });
+  });
+
+  // Demo Sample Fill Link
+  const demoFillLink = document.getElementById('auth-demo-fill');
+  if (demoFillLink) {
+    demoFillLink.addEventListener('click', (e) => {
+      e.preventDefault();
+      fillDemoCredentials(currentAuthRole);
+    });
+  }
+
+  // Login Form Submission
+  const authForm = document.getElementById('auth-form');
+  if (authForm) {
+    authForm.addEventListener('submit', handleLoginSubmit);
+  }
+
+  // Registration Form Submission
+  const regForm = document.getElementById('register-form');
+  if (regForm) {
+    regForm.addEventListener('submit', handleRegisterSubmit);
+  }
+
+  // Initial DB status check
+  checkDbHealth();
+}
+
+function openAuthModalForRole(role, mode = 'login') {
+  setAuthRole(role);
+  setAuthMode(mode);
+  toggleModal('auth-modal', true);
+}
+
+function setAuthMode(mode) {
+  currentAuthMode = mode;
+  const loginBtn = document.getElementById('auth-mode-login');
+  const regBtn = document.getElementById('auth-mode-register');
+  const loginForm = document.getElementById('auth-form');
+  const regForm = document.getElementById('register-form');
+  const title = document.getElementById('auth-modal-title');
+  const subtitle = document.getElementById('auth-modal-subtitle');
+  const alertBox = document.getElementById('auth-alert');
+
+  if (alertBox) alertBox.style.display = 'none';
+
+  if (mode === 'login') {
+    loginBtn.classList.add('active');
+    regBtn.classList.remove('active');
+    loginForm.style.display = 'flex';
+    regForm.style.display = 'none';
+    if (title) title.textContent = `Access ASPEN (${currentAuthRole.toUpperCase()})`;
+    if (subtitle) subtitle.textContent = `Sign in using your registered credentials in PostgreSQL database.`;
+  } else {
+    regBtn.classList.add('active');
+    loginBtn.classList.remove('active');
+    loginForm.style.display = 'none';
+    regForm.style.display = 'flex';
+    if (title) title.textContent = `Register ${currentAuthRole.toUpperCase()} Account`;
+    if (subtitle) subtitle.textContent = `Register your details to create an account in PostgreSQL (ASPEN Log).`;
+  }
+}
+
+function setAuthRole(role) {
+  currentAuthRole = role;
   
-  toggleModal('auth-modal', false);
-  switchRole(selectedRole);
+  // Update role buttons active state
+  document.querySelectorAll('.auth-tab-btn').forEach(btn => {
+    if (btn.dataset.role === role) {
+      btn.classList.add('active');
+    } else {
+      btn.classList.remove('active');
+    }
+  });
+
+  // Update submit button text using current translation
+  const loginSubmitBtn = document.getElementById('auth-submit-btn');
+  const regSubmitBtn = document.getElementById('reg-submit-btn');
+  const regOrgLabel = document.getElementById('reg-org-label');
+
+  const loginKey = `login_btn_${role}`;
+  const regKey = `reg_btn_${role}`;
+  if (loginSubmitBtn) loginSubmitBtn.textContent = t(loginKey) || `Login as ${role.toUpperCase()}`;
+  if (regSubmitBtn) regSubmitBtn.textContent = t(regKey) || `Register ${role.toUpperCase()} Account in PostgreSQL`;
+
+  if (regOrgLabel) {
+    if (role === 'seller') regOrgLabel.textContent = t('company_name') + ' *';
+    else if (role === 'admin') regOrgLabel.textContent = t('dept_agency') + ' *';
+    else regOrgLabel.textContent = t('org_name') + ' *';
+  }
+
+  // Show/Hide Role Specific Fields
+  const buyerFields = document.getElementById('role-fields-buyer');
+  const sellerFields = document.getElementById('role-fields-seller');
+  const adminFields = document.getElementById('role-fields-admin');
+
+  if (buyerFields) buyerFields.style.display = role === 'buyer' ? 'block' : 'none';
+  if (sellerFields) sellerFields.style.display = role === 'seller' ? 'block' : 'none';
+  if (adminFields) adminFields.style.display = role === 'admin' ? 'block' : 'none';
+
+  // Set Demo defaults for login
+  fillDemoCredentials(role);
+
+  // Update title
+  const title = document.getElementById('auth-modal-title');
+  if (title) {
+    title.textContent = currentAuthMode === 'register' ?
+      `${t('register_tab')} ${role.toUpperCase()}` :
+      `${t('access_portal')} (${role.toUpperCase()})`;
+  }
+}
+
+function fillDemoCredentials(role) {
+  const emailInput = document.getElementById('auth-email');
+  const passInput = document.getElementById('auth-password');
+  if (!emailInput || !passInput) return;
+
+  if (role === 'buyer') {
+    emailInput.value = 'buyer@aspen.gov';
+    passInput.value = 'buyer123';
+  } else if (role === 'seller') {
+    emailInput.value = 'seller@aspen.gov';
+    passInput.value = 'seller123';
+  } else if (role === 'admin') {
+    emailInput.value = 'admin@aspen.gov';
+    passInput.value = 'admin123';
+  }
+}
+
+async function checkDbHealth() {
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/health`);
+    const data = await res.json();
+    if (data.status === 'ok') {
+      const banner = document.getElementById('db-status-banner');
+      if (banner) {
+        banner.style.backgroundColor = '#f0fdf4';
+        banner.style.borderColor = '#bbf7d0';
+        banner.style.color = '#166534';
+        banner.innerHTML = `<span class="db-dot"></span><span>Connected to PostgreSQL: <strong>${data.database}</strong></span>`;
+      }
+    }
+  } catch (err) {
+    const banner = document.getElementById('db-status-banner');
+    if (banner) {
+      banner.style.backgroundColor = '#fef2f2';
+      banner.style.borderColor = '#fecaca';
+      banner.style.color = '#991b1b';
+      banner.innerHTML = `<span style="width:8px; height:8px; background:#ef4444; border-radius:50%; display:inline-block;"></span><span>Express Server Disconnected (Ensure server is running on port 5001)</span>`;
+    }
+  }
+}
+
+async function handleLoginSubmit(e) {
+  e.preventDefault();
+  showAuthAlert('Authenticating credentials with PostgreSQL database...', 'info');
+
+  const email = document.getElementById('auth-email').value;
+  const password = document.getElementById('auth-password').value;
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password, role: currentAuthRole })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showAuthAlert(data.error || 'Authentication failed.', 'error');
+      return;
+    }
+
+    showAuthAlert(`Success! Authenticated as ${data.user.role.toUpperCase()}`, 'success');
+
+    // Update currentUser state with authentic DB user
+    currentUser = {
+      role: data.user.role,
+      name: data.user.fullName,
+      email: data.user.email,
+      org: data.user.organization || 'ASPEN Log Verified',
+      initials: getInitials(data.user.fullName),
+      subtext: `${data.user.role.toUpperCase()} • ${data.user.organization || 'Verified'}`,
+      phone: data.user.phone,
+      roleDetails: data.user.roleDetails,
+      savedStandards: MOCK_USERS[data.user.role]?.savedStandards || [],
+      rfqs: MOCK_USERS[data.user.role]?.rfqs || [],
+      products: MOCK_USERS[data.user.role]?.products || []
+    };
+
+    setTimeout(() => {
+      toggleModal('auth-modal', false);
+      switchRole(data.user.role);
+      showToast(`Welcome ${data.user.fullName}! Authenticated via PostgreSQL (ASPEN Log).`, 'success');
+    }, 600);
+
+  } catch (err) {
+    showAuthAlert(`Connection Error: Could not reach backend server at ${API_BASE_URL} (${err.message})`, 'error');
+  }
+}
+
+async function handleRegisterSubmit(e) {
+  e.preventDefault();
+  showAuthAlert('Saving details to PostgreSQL database "ASPEN Log"...', 'info');
+
+  const fullName = document.getElementById('reg-fullname').value;
+  const email = document.getElementById('reg-email').value;
+  const phone = document.getElementById('reg-phone').value;
+  const password = document.getElementById('reg-password').value;
+  const organization = document.getElementById('reg-org').value;
+
+  let roleDetails = {};
+  if (currentAuthRole === 'buyer') {
+    roleDetails = {
+      dept: document.getElementById('reg-buyer-dept').value,
+      authority: document.getElementById('reg-buyer-authority').value
+    };
+  } else if (currentAuthRole === 'seller') {
+    roleDetails = {
+      gstin: document.getElementById('reg-seller-gstin').value,
+      category: document.getElementById('reg-seller-category').value
+    };
+  } else if (currentAuthRole === 'admin') {
+    roleDetails = {
+      empId: document.getElementById('reg-admin-empid').value,
+      passcode: document.getElementById('reg-admin-passcode').value
+    };
+  }
+
+  try {
+    const res = await fetch(`${API_BASE_URL}/api/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        fullName,
+        email,
+        password,
+        role: currentAuthRole,
+        organization,
+        phone,
+        roleDetails
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      showAuthAlert(data.error || 'Registration failed.', 'error');
+      return;
+    }
+
+    showAuthAlert(`Account successfully registered in PostgreSQL "ASPEN Log" database! Switching to Login...`, 'success');
+
+    // Pre-fill login inputs with new credentials
+    document.getElementById('auth-email').value = email;
+    document.getElementById('auth-password').value = password;
+
+    setTimeout(() => {
+      setAuthMode('login');
+      showAuthAlert(`Account ready! Click "Login as ${currentAuthRole.toUpperCase()}" to sign in.`, 'success');
+    }, 1500);
+
+  } catch (err) {
+    showAuthAlert(`Connection Error: Could not reach Express server (${err.message})`, 'error');
+  }
+}
+
+function showAuthAlert(msg, type = 'error') {
+  const alertBox = document.getElementById('auth-alert');
+  if (!alertBox) return;
+  alertBox.style.display = 'block';
+  alertBox.className = `auth-alert ${type}`;
+  alertBox.textContent = msg;
+}
+
+function getInitials(name) {
+  if (!name) return 'U';
+  const parts = name.trim().split(' ');
+  if (parts.length >= 2) {
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+  }
+  return name.slice(0, 2).toUpperCase();
 }
 
 // ==========================================================================
@@ -473,43 +1370,43 @@ const NAV_ICONS = {
 
 function renderSidebarNav() {
   const navContainer = document.getElementById('sidebar-nav');
+  if (!navContainer) return;
   navContainer.innerHTML = '';
   
   let menuItems = [];
   
   if (currentUser.role === 'public') {
     menuItems = [
-      { id: 'home', label: 'Home', icon: NAV_ICONS.home },
-      { id: 'categories', label: 'Categories', icon: NAV_ICONS.categories },
-      { id: 'active', label: 'Active', icon: NAV_ICONS.active },
-      { id: 'bis', label: 'BIS', icon: NAV_ICONS.bis },
-      { id: 'register', label: 'Register', icon: NAV_ICONS.register },
-      { id: 'settings', label: 'Settings', icon: NAV_ICONS.settings }
+      { id: 'home', label: t('home'), icon: NAV_ICONS.home },
+      { id: 'categories', label: t('bis_standards'), icon: NAV_ICONS.categories },
+      { id: 'active', label: t('vendor_directory'), icon: NAV_ICONS.active },
+      { id: 'bis', label: t('compliance_suite'), icon: NAV_ICONS.bis },
+      { id: 'register', label: t('register_tab'), icon: NAV_ICONS.register },
+      { id: 'settings', label: t('settings'), icon: NAV_ICONS.settings }
     ];
   } else if (currentUser.role === 'buyer') {
     menuItems = [
-      { id: 'home', label: 'Home', icon: NAV_ICONS.home },
-      { id: 'categories', label: 'Categories', icon: NAV_ICONS.categories },
-      { id: 'active', label: 'Active', icon: NAV_ICONS.active },
-      { id: 'bis', label: 'BIS', icon: NAV_ICONS.bis },
-      { id: 'register', label: 'Register', icon: NAV_ICONS.register }
+      { id: 'home', label: t('home'), icon: NAV_ICONS.home },
+      { id: 'categories', label: t('bis_standards'), icon: NAV_ICONS.categories },
+      { id: 'active', label: t('vendor_directory'), icon: NAV_ICONS.active },
+      { id: 'bis', label: t('compliance_suite'), icon: NAV_ICONS.bis },
+      { id: 'register', label: t('register_tab'), icon: NAV_ICONS.register }
     ];
   } else if (currentUser.role === 'seller') {
     menuItems = [
-      { id: 'home', label: 'Home', icon: NAV_ICONS.home },
-      { id: 'my-products', label: 'Products', icon: NAV_ICONS.products },
-      { id: 'active', label: 'Opportunities', icon: NAV_ICONS.active },
-      { id: 'bis', label: 'BIS', icon: NAV_ICONS.bis },
-      { id: 'register', label: 'Register', icon: NAV_ICONS.register }
+      { id: 'home', label: t('home'), icon: NAV_ICONS.home },
+      { id: 'my-products', label: t('vendor_directory'), icon: NAV_ICONS.products },
+      { id: 'active', label: t('compliance_suite'), icon: NAV_ICONS.active },
+      { id: 'bis', label: t('bis_standards'), icon: NAV_ICONS.bis },
+      { id: 'register', label: t('register_tab'), icon: NAV_ICONS.register }
     ];
   } else if (currentUser.role === 'admin') {
     menuItems = [
-      { id: 'admin-dashboard', label: 'Dashboard', icon: NAV_ICONS.home },
-      { id: 'admin-users', label: 'Users', icon: NAV_ICONS.active },
-      { id: 'bis', label: 'BIS', icon: NAV_ICONS.bis },
-      { id: 'categories', label: 'Categories', icon: NAV_ICONS.categories },
-      { id: 'register', label: 'Register', icon: NAV_ICONS.register },
-      { id: 'settings', label: 'Settings', icon: NAV_ICONS.settings }
+      { id: 'admin-dashboard', label: t('home'), icon: NAV_ICONS.home },
+      { id: 'admin-users', label: t('audit_logs'), icon: NAV_ICONS.active },
+      { id: 'bis', label: t('bis_standards'), icon: NAV_ICONS.bis },
+      { id: 'categories', label: t('compliance_suite'), icon: NAV_ICONS.categories },
+      { id: 'settings', label: t('settings'), icon: NAV_ICONS.settings }
     ];
   }
   
@@ -615,72 +1512,72 @@ function renderHomePage(container) {
 
   if (role === 'public' || role === 'admin') {
     homeWrapper.innerHTML = `
-      <h1 class="home-title">What do you need to procure?</h1>
+      <h1 class="home-title">${t('what_procure')}</h1>
       
       <div class="pill-search-bar-wrapper">
         <svg class="search-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" id="main-search-input" class="pill-search-input" placeholder="Describe your requirement in natural language..." value="${currentSearchQuery}">
+        <input type="text" id="main-search-input" class="pill-search-input" placeholder="${t('natural_lang_placeholder')}" value="${currentSearchQuery}">
       </div>
       
-      <button id="search-action-btn-trigger" class="navy-analyze-btn">Analyze</button>
+      <button id="search-action-btn-trigger" class="navy-analyze-btn">${t('analyze_btn')}</button>
       
       <div class="popular-categories-section">
-        <h3 class="popular-categories-title">Popular Categories</h3>
+        <h3 class="popular-categories-title">${t('popular_categories')}</h3>
         <div class="popular-categories-grid">
-          <div class="popular-cat-card" data-cat="Medical">Medical</div>
-          <div class="popular-cat-card" data-cat="Electrical">Electrical</div>
-          <div class="popular-cat-card" data-cat="Mechanical">Mechanical</div>
-          <div class="popular-cat-card" data-cat="Laboratory">Lab</div>
+          <div class="popular-cat-card" data-cat="Medical">${t('cat_medical')}</div>
+          <div class="popular-cat-card" data-cat="Electrical">${t('cat_electrical')}</div>
+          <div class="popular-cat-card" data-cat="Mechanical">${t('cat_mechanical')}</div>
+          <div class="popular-cat-card" data-cat="Laboratory">${t('cat_lab')}</div>
         </div>
       </div>
       
       <div class="ai-tip-banner" id="home-ai-tip-banner" style="cursor:pointer;">
-        AI Tip: "We need 5,000 water pumps for municipal use."
+        ${t('ai_tip')}
       </div>
     `;
   } 
   else if (role === 'buyer') {
     homeWrapper.innerHTML = `
-      <h1 class="home-title">Describe what you need</h1>
+      <h1 class="home-title">${t('describe_need')}</h1>
       
       <div class="pill-search-bar-wrapper">
         <svg class="search-icon-svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
           <circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>
         </svg>
-        <input type="text" id="main-search-input" class="pill-search-input" placeholder="We need 10,000 industrial water pumps..." value="${currentSearchQuery}">
+        <input type="text" id="main-search-input" class="pill-search-input" placeholder="${t('buyer_placeholder')}" value="${currentSearchQuery}">
       </div>
       
-      <button id="search-action-btn-trigger" class="navy-analyze-btn">Analyze</button>
+      <button id="search-action-btn-trigger" class="navy-analyze-btn">${t('analyze_btn')}</button>
       
       <div class="buyer-pill-row">
-        <div class="buyer-pill-card standards" id="buyer-standards-widget">Standards</div>
-        <div class="buyer-pill-card specification" id="buyer-spec-widget">Specification</div>
-        <div class="buyer-pill-card manufacturers" id="buyer-mfrs-widget">Manufacturers</div>
+        <div class="buyer-pill-card standards" id="buyer-standards-widget">${t('standards_widget')}</div>
+        <div class="buyer-pill-card specification" id="buyer-spec-widget">${t('specification_widget')}</div>
+        <div class="buyer-pill-card manufacturers" id="buyer-mfrs-widget">${t('manufacturers_widget')}</div>
       </div>
     `;
   } 
   else if (role === 'seller') {
     homeWrapper.innerHTML = `
       <div class="seller-opp-section">
-        <h2 class="seller-opp-title">New Procurement Opportunities</h2>
+        <h2 class="seller-opp-title">${t('new_opp_title')}</h2>
         
         <div class="opp-rows-container">
           <div class="opp-row-item" data-query="We need cotton bandage cloth for government hospitals">
-            <span class="opp-row-title">Cotton Bandage Cloth</span>
-            <span class="opp-row-meta">Match 96% • Government Hospital</span>
+            <span class="opp-row-title">${t('opp_cotton')}</span>
+            <span class="opp-row-meta">${t('opp_cotton_meta')}</span>
           </div>
           <div class="opp-row-item" data-query="Find BIS standards for laboratory glass tubes">
-            <span class="opp-row-title">Laboratory Glass Tubes</span>
-            <span class="opp-row-meta">Match 91% • Research Institute</span>
+            <span class="opp-row-title">${t('opp_glass')}</span>
+            <span class="opp-row-meta">${t('opp_glass_meta')}</span>
           </div>
         </div>
         
         <div class="seller-pill-row">
-          <div class="seller-pill-card active-rfqs" id="seller-rfq-widget">Active RFQs</div>
-          <div class="seller-pill-card bis-status" id="seller-bis-widget">BIS Status</div>
-          <div class="seller-pill-card capacity" id="seller-cap-widget">Capacity</div>
+          <div class="seller-pill-card active-rfqs" id="seller-rfq-widget">${t('active_rfqs_widget')}</div>
+          <div class="seller-pill-card bis-status" id="seller-bis-widget">${t('bis_status_widget')}</div>
+          <div class="seller-pill-card capacity" id="seller-cap-widget">${t('capacity_widget')}</div>
         </div>
       </div>
     `;
@@ -759,8 +1656,8 @@ function renderHomePage(container) {
 function renderPublicHomeWidgets(container) {
   container.innerHTML = `
     <div class="section-header-row">
-      <h3>BIS Highlight</h3>
-      <button class="text-btn" id="home-view-all-bis">Browse Registry</button>
+      <h3>${t('bis_highlight')}</h3>
+      <button class="text-btn" id="home-view-all-bis">${t('browse_registry')}</button>
     </div>
     <div class="bis-highlights-grid" id="home-bis-list">
       <!-- Loaded dynamically below -->
@@ -791,8 +1688,8 @@ function renderPublicHomeWidgets(container) {
 function renderBuyerHomeWidgets(container) {
   container.innerHTML = `
     <div class="section-header-row">
-      <h3>My Active Requirements</h3>
-      <button class="text-btn" id="home-view-all-rfqs">Track RFQs</button>
+      <h3>${t('my_requirements')}</h3>
+      <button class="text-btn" id="home-view-all-rfqs">${t('track_rfqs')}</button>
     </div>
     <div class="activities-list">
       ${currentUser.rfqs.map(rfq => `
@@ -801,7 +1698,7 @@ function renderBuyerHomeWidgets(container) {
             <span class="activity-indicator-dot ${rfq.status === 'Active' ? 'success' : 'warning'}"></span>
             <div class="activity-text-info">
               <span class="activity-title">${rfq.product}</span>
-              <span class="activity-sub">${rfq.qty} • Bids Received: ${rfq.bids}</span>
+              <span class="activity-sub">${rfq.qty} • ${t('bids_received')}: ${rfq.bids}</span>
             </div>
           </div>
           <span class="badge ${rfq.status === 'Active' ? 'badge-success' : 'badge-warning'}">${rfq.status}</span>
@@ -819,8 +1716,8 @@ function renderSellerHomeWidgets(container) {
   // Compliance & Capacity Card widget
   container.innerHTML = `
     <div class="section-header-row">
-      <h3>Certification Status</h3>
-      <button class="text-btn" id="home-view-all-products">Products</button>
+      <h3>${t('cert_status')}</h3>
+      <button class="text-btn" id="home-view-all-products">${t('products_btn')}</button>
     </div>
     <div class="activities-list">
       ${currentUser.products.map(prod => `
@@ -962,6 +1859,7 @@ function showNLUModal() {
       <button class="secondary-btn btn-sm" id="nlu-view-std-btn">View Standard Rules</button>
     `;
     
+    stdRow.querySelector('#nlu-view-std-btn').textContent = t('nlu_view_std');
     stdRow.querySelector('#nlu-view-std-btn').addEventListener('click', () => {
       toggleModal('nlu-modal', false);
       showBISModal(std.code);
@@ -969,7 +1867,7 @@ function showNLUModal() {
     
     standardsContainer.appendChild(stdRow);
   } else {
-    standardsContainer.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted);">No exact matching BIS Standard could be verified automatically for this query.</p>`;
+    standardsContainer.innerHTML = `<p style="font-size:0.85rem; color:var(--text-muted);">${t('nlu_no_standard')}</p>`;
   }
 
   // Adjust modal actions based on user role
@@ -978,8 +1876,8 @@ function showNLUModal() {
 
   if (currentUser.role === 'public') {
     actionsContainer.innerHTML = `
-      <button class="secondary-btn" id="nlu-action-close">Close Analysis</button>
-      <button class="primary-btn" id="nlu-action-login">Sign In to Procure</button>
+      <button class="secondary-btn" id="nlu-action-close">${t('nlu_close')}</button>
+      <button class="primary-btn" id="nlu-action-login">${t('nlu_sign_in')}</button>
     `;
     actionsContainer.querySelector('#nlu-action-close').addEventListener('click', () => toggleModal('nlu-modal', false));
     actionsContainer.querySelector('#nlu-action-login').addEventListener('click', () => {
@@ -989,8 +1887,8 @@ function showNLUModal() {
   } 
   else if (currentUser.role === 'buyer') {
     actionsContainer.innerHTML = `
-      <button class="secondary-btn" id="nlu-action-save">Save Requirement</button>
-      <button class="primary-btn" id="nlu-action-rfq">Draft Official RFQ</button>
+      <button class="secondary-btn" id="nlu-action-save">${t('nlu_save_req')}</button>
+      <button class="primary-btn" id="nlu-action-rfq">${t('nlu_draft_rfq')}</button>
     `;
     actionsContainer.querySelector('#nlu-action-close-save')?.addEventListener('click', () => toggleModal('nlu-modal', false));
     actionsContainer.querySelector('#nlu-action-save').addEventListener('click', () => {
@@ -1004,8 +1902,8 @@ function showNLUModal() {
   } 
   else if (currentUser.role === 'seller') {
     actionsContainer.innerHTML = `
-      <button class="secondary-btn" id="nlu-action-close">Close</button>
-      <button class="primary-btn" id="nlu-action-opp">View Active Tenders</button>
+      <button class="secondary-btn" id="nlu-action-close">${t('nlu_close')}</button>
+      <button class="primary-btn" id="nlu-action-opp">${t('nlu_view_tenders')}</button>
     `;
     actionsContainer.querySelector('#nlu-action-close').addEventListener('click', () => toggleModal('nlu-modal', false));
     actionsContainer.querySelector('#nlu-action-opp').addEventListener('click', () => {
@@ -1015,8 +1913,8 @@ function showNLUModal() {
   } 
   else if (currentUser.role === 'admin') {
     actionsContainer.innerHTML = `
-      <button class="secondary-btn" id="nlu-action-close">Close</button>
-      <button class="primary-btn" id="nlu-action-edit-std">Edit Associated Standard</button>
+      <button class="secondary-btn" id="nlu-action-close">${t('nlu_close')}</button>
+      <button class="primary-btn" id="nlu-action-edit-std">${t('nlu_edit_std')}</button>
     `;
     actionsContainer.querySelector('#nlu-action-close').addEventListener('click', () => toggleModal('nlu-modal', false));
     actionsContainer.querySelector('#nlu-action-edit-std').addEventListener('click', () => {
@@ -1072,23 +1970,23 @@ function renderBuyerActiveRFQs(container) {
   container.innerHTML = `
     <div class="page-actions-bar">
       <div class="page-title-area">
-        <h1>My Procurement RFQs</h1>
-        <p>Manage and audit bids received against your active procurement standards.</p>
+        <h1>${t('my_rfqs')}</h1>
+        <p>${t('rfq_page_sub')}</p>
       </div>
-      <button class="primary-btn" id="buyer-new-rfq-btn">Create Requirement</button>
+      <button class="primary-btn" id="buyer-new-rfq-btn">${t('create_req')}</button>
     </div>
     
     <div class="product-table-wrapper">
       <table class="aspen-table">
         <thead>
           <tr>
-            <th>RFQ ID</th>
-            <th>Requirement Details</th>
-            <th>Required Standard</th>
-            <th>Quantity Requested</th>
-            <th>Date Published</th>
-            <th>Bids Received</th>
-            <th>Tender Status</th>
+            <th>${t('rfq_id')}</th>
+            <th>${t('requirement_details')}</th>
+            <th>${t('required_standard')}</th>
+            <th>${t('qty_requested')}</th>
+            <th>${t('date_published')}</th>
+            <th>${t('bids_count')}</th>
+            <th>${t('tender_status')}</th>
           </tr>
         </thead>
         <tbody>
@@ -1110,7 +2008,7 @@ function renderBuyerActiveRFQs(container) {
 
   container.querySelector('#buyer-new-rfq-btn').addEventListener('click', () => {
     navigateTo('home');
-    showToast('Use the Central Search bar to formulate compliance targets first.', 'info');
+    showToast(t('toast_search_use_bar'), 'info');
   });
 }
 
@@ -1170,22 +2068,22 @@ function renderSellerProducts(container) {
   container.innerHTML = `
     <div class="page-actions-bar">
       <div class="page-title-area">
-        <h1>My Manufacturing Portfolio</h1>
-        <p>List and verify your products against national BIS standards to unlock active opportunities.</p>
+        <h1>${t('my_portfolio')}</h1>
+        <p>${t('portfolio_sub')}</p>
       </div>
-      <button class="primary-btn" id="seller-add-prod-btn">Register New Product</button>
+      <button class="primary-btn" id="seller-add-prod-btn">${t('register_product')}</button>
     </div>
 
     <div class="product-table-wrapper">
       <table class="aspen-table">
         <thead>
           <tr>
-            <th>Product Code</th>
-            <th>Product Designation</th>
-            <th>Category</th>
-            <th>Audit Standard</th>
-            <th>National Registry Code</th>
-            <th>Compliance Status</th>
+            <th>${t('product_code')}</th>
+            <th>${t('product_designation')}</th>
+            <th>${t('category')}</th>
+            <th>${t('audit_standard')}</th>
+            <th>${t('registry_code')}</th>
+            <th>${t('compliance_status')}</th>
           </tr>
         </thead>
         <tbody>
@@ -1276,21 +2174,21 @@ function renderSellerOpportunities(container) {
 
   container.innerHTML = `
     <div class="page-title-area">
-      <h1>Active Bidding Tenders</h1>
-      <p>Browse active government requirements matching your certified standard capabilities.</p>
+      <h1>${t('active_tenders')}</h1>
+      <p>${t('active_tenders_sub')}</p>
     </div>
 
     <div class="product-table-wrapper">
       <table class="aspen-table">
         <thead>
           <tr>
-            <th>RFQ ID</th>
-            <th>Required Product</th>
-            <th>Required Standard</th>
-            <th>Quantity Slated</th>
-            <th>Bidding Close Date</th>
-            <th>Your Standard Qualification</th>
-            <th>Action</th>
+            <th>${t('rfq_id')}</th>
+            <th>${t('required_product')}</th>
+            <th>${t('required_standard')}</th>
+            <th>${t('qty_slated')}</th>
+            <th>${t('bid_close_date')}</th>
+            <th>${t('std_qualification')}</th>
+            <th>${t('action')}</th>
           </tr>
         </thead>
         <tbody>
@@ -1305,13 +2203,13 @@ function renderSellerOpportunities(container) {
                 <td>${rfq.date}</td>
                 <td>
                   ${matchesStandard 
-                    ? `<span class="badge badge-success">✓ Qualified Manufacturer</span>` 
-                    : `<span class="badge badge-danger">✗ Standard Uncertified</span>`
+                    ? `<span class="badge badge-success">${t('qualified_mfr')}</span>` 
+                    : `<span class="badge badge-danger">${t('std_uncertified')}</span>`
                   }
                 </td>
                 <td>
                   <button class="primary-btn btn-sm" ${!matchesStandard ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} onclick="window.submitSellerBidGlobal('${rfq.id}')">
-                    Submit Compliant Bid
+                    ${t('submit_bid')}
                   </button>
                 </td>
               </tr>
@@ -1351,33 +2249,33 @@ function renderAdminDashboard(container) {
   statsRow.innerHTML = `
     <div class="card stat-card">
       <div class="stat-left">
-        <span class="stat-label">Pending Verifications</span>
+        <span class="stat-label">${t('pending_verifications')}</span>
         <span class="stat-value" id="admin-stat-pending">2</span>
-        <span class="stat-change up">↑ Audits Slated</span>
+        <span class="stat-change up">${t('audits_slated')}</span>
       </div>
       <div class="stat-icon-wrapper">👥</div>
     </div>
     <div class="card stat-card">
       <div class="stat-left">
-        <span class="stat-label">Active RFQs</span>
+        <span class="stat-label">${t('active_rfqs_label')}</span>
         <span class="stat-value">6</span>
-        <span class="stat-change up">↑ Bidding Active</span>
+        <span class="stat-change up">${t('bidding_active')}</span>
       </div>
       <div class="stat-icon-wrapper">⚡</div>
     </div>
     <div class="card stat-card">
       <div class="stat-left">
-        <span class="stat-label">Total BIS Codes</span>
+        <span class="stat-label">${t('total_bis_codes')}</span>
         <span class="stat-value">${MOCK_BIS_STANDARDS.length}</span>
-        <span class="stat-change">Active Registry</span>
+        <span class="stat-change">${t('active_registry')}</span>
       </div>
       <div class="stat-icon-wrapper">📘</div>
     </div>
     <div class="card stat-card">
       <div class="stat-left">
-        <span class="stat-label">System Performance</span>
+        <span class="stat-label">${t('system_perf')}</span>
         <span class="stat-value">99.8%</span>
-        <span class="stat-change up">↑ SLA Compliant</span>
+        <span class="stat-change up">${t('sla_compliant')}</span>
       </div>
       <div class="stat-icon-wrapper">⚙️</div>
     </div>
@@ -1393,8 +2291,8 @@ function renderAdminDashboard(container) {
   chartCol.className = 'dashboard-section';
   chartCol.innerHTML = `
     <div class="section-header-row">
-      <h3>Monthly Verification Bids Audited</h3>
-      <span class="badge badge-info">2026 Year Overview</span>
+      <h3>${t('monthly_audit_chart')}</h3>
+      <span class="badge badge-info">${t('year_overview')}</span>
     </div>
     <div class="card analytics-chart-card">
       <div class="chart-canvas-container">
@@ -1444,8 +2342,8 @@ function renderAdminDashboard(container) {
   auditCol.className = 'dashboard-section';
   auditCol.innerHTML = `
     <div class="section-header-row">
-      <h3>Active System Logs</h3>
-      <button class="text-btn" id="admin-view-all-logs">View Logs</button>
+      <h3>${t('active_system_logs')}</h3>
+      <button class="text-btn" id="admin-view-all-logs">${t('view_logs')}</button>
     </div>
     <div class="card audit-logs-list" style="max-height: 280px; overflow-y:auto;">
       ${systemAuditLogs.slice(0, 4).map(log => `
@@ -1475,25 +2373,25 @@ function renderAdminDashboard(container) {
 function renderAdminUsers(container) {
   container.innerHTML = `
     <div class="page-title-area">
-      <h1>Profile Verification Registry</h1>
-      <p>Review and verify identities for government purchasing officers and supplier organizations.</p>
+      <h1>${t('profile_ver_registry')}</h1>
+      <p>${t('profile_ver_sub')}</p>
     </div>
     
     <div class="dashboard-section">
       <div class="section-header-row">
-        <h3>Buyer Applications Pending Review</h3>
+        <h3>${t('buyer_apps_pending')}</h3>
       </div>
       <div class="product-table-wrapper">
         <table class="aspen-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Organization</th>
-              <th>Representative Officer</th>
-              <th>Email Address</th>
-              <th>Sign-up Date</th>
-              <th>Status</th>
-              <th>Action</th>
+              <th>${t('rfq_id')}</th>
+              <th>${t('org_name')}</th>
+              <th>${t('full_name')}</th>
+              <th>${t('email_addr')}</th>
+              <th>${t('date_published')}</th>
+              <th>${t('compliance_status')}</th>
+              <th>${t('action')}</th>
             </tr>
           </thead>
           <tbody>
@@ -1511,8 +2409,8 @@ function renderAdminUsers(container) {
                 </td>
                 <td>
                   ${buyer.status === 'Verified' 
-                    ? `<button class="secondary-btn btn-sm" disabled style="opacity:0.5; cursor:not-allowed;">Approved</button>`
-                    : `<button class="primary-btn btn-sm" onclick="window.verifyUserGlobal('buyer', '${buyer.id}')">Verify</button>`
+                    ? `<button class="secondary-btn btn-sm" disabled style="opacity:0.5; cursor:not-allowed;">${t('approved_btn')}</button>`
+                    : `<button class="primary-btn btn-sm" onclick="window.verifyUserGlobal('buyer', '${buyer.id}')">${t('verify_btn')}</button>`
                   }
                 </td>
               </tr>
@@ -1524,19 +2422,19 @@ function renderAdminUsers(container) {
 
     <div class="dashboard-section" style="margin-top:2rem;">
       <div class="section-header-row">
-        <h3>Seller Applications Pending Review</h3>
+        <h3>${t('seller_apps_pending')}</h3>
       </div>
       <div class="product-table-wrapper">
         <table class="aspen-table">
           <thead>
             <tr>
-              <th>ID</th>
-              <th>Manufacturing Org</th>
-              <th>Representative Contact</th>
-              <th>Email Address</th>
-              <th>Sign-up Date</th>
-              <th>Status</th>
-              <th>Action</th>
+              <th>${t('rfq_id')}</th>
+              <th>${t('company_name')}</th>
+              <th>${t('full_name')}</th>
+              <th>${t('email_addr')}</th>
+              <th>${t('date_published')}</th>
+              <th>${t('compliance_status')}</th>
+              <th>${t('action')}</th>
             </tr>
           </thead>
           <tbody>
@@ -1554,8 +2452,8 @@ function renderAdminUsers(container) {
                 </td>
                 <td>
                   ${seller.status === 'Verified' 
-                    ? `<button class="secondary-btn btn-sm" disabled style="opacity:0.5; cursor:not-allowed;">Approved</button>`
-                    : `<button class="primary-btn btn-sm" onclick="window.verifyUserGlobal('seller', '${seller.id}')">Verify</button>`
+                    ? `<button class="secondary-btn btn-sm" disabled style="opacity:0.5; cursor:not-allowed;">${t('approved_btn')}</button>`
+                    : `<button class="primary-btn btn-sm" onclick="window.verifyUserGlobal('seller', '${seller.id}')">${t('verify_btn')}</button>`
                   }
                 </td>
               </tr>
@@ -1575,7 +2473,7 @@ window.verifyUserGlobal = (type, userId) => {
     user.status = 'Verified';
     addAuditLog(currentUser.email, `Verified user profile and authenticated access permissions for ${user.org} (${userId}).`);
     addNotification('success', `Security Clearance: ${user.org} profile verified and enabled.`);
-    showToast(`Successfully verified profile ${userId}.`, 'success');
+    showToast(`${t('toast_verified')} ${userId}.`, 'success');
     
     // Refresh page to show updated verified state
     navigateTo('admin-users');
@@ -1585,14 +2483,14 @@ window.verifyUserGlobal = (type, userId) => {
 function renderAdminAnalytics(container) {
   container.innerHTML = `
     <div class="page-title-area">
-      <h1>Procurement & Compliance Analytics</h1>
-      <p>Performance tracking metrics, standards validation logs, and activity index metrics.</p>
+      <h1>${t('procurement_analytics')}</h1>
+      <p>${t('analytics_sub')}</p>
     </div>
     
     <div class="stats-row">
       <div class="card stat-card">
         <div class="stat-left">
-          <span class="stat-label">Total Volume Searched</span>
+          <span class="stat-label">${t('total_vol_searched')}</span>
           <span class="stat-value">14.8M Units</span>
           <span class="stat-change up">↑ 12% Month-on-Month</span>
         </div>
@@ -1600,7 +2498,7 @@ function renderAdminAnalytics(container) {
       </div>
       <div class="card stat-card">
         <div class="stat-left">
-          <span class="stat-label">Standards Audit Match Rate</span>
+          <span class="stat-label">${t('std_match_rate')}</span>
           <span class="stat-value">94.2%</span>
           <span class="stat-change up">↑ High Match Accuracy</span>
         </div>
@@ -1608,7 +2506,7 @@ function renderAdminAnalytics(container) {
       </div>
       <div class="card stat-card">
         <div class="stat-left">
-          <span class="stat-label">Unique Bidding Manufacturers</span>
+          <span class="stat-label">${t('unique_mfrs')}</span>
           <span class="stat-value">1,402</span>
           <span class="stat-change">Active in Grid</span>
         </div>
@@ -1617,7 +2515,7 @@ function renderAdminAnalytics(container) {
     </div>
 
     <div class="card" style="padding: 2rem;">
-      <h3 style="margin-bottom:1rem;">AI Natural Language Matching Accuracy by Segment</h3>
+      <h3 style="margin-bottom:1rem;">${t('ai_match_title')}</h3>
       <div style="display:flex; flex-direction:column; gap:1.25rem;">
         <div>
           <div style="display:flex; justify-content:between; font-size:0.8rem; font-weight:600; margin-bottom:0.25rem;">
@@ -1654,14 +2552,14 @@ function renderAdminAnalytics(container) {
 function renderAdminAudit(container) {
   container.innerHTML = `
     <div class="page-title-area">
-      <h1>System Cryptographic Audit Logs</h1>
-      <p>Secure audit trails tracking dashboard transitions, verifications, registry modifications, and security overrides.</p>
+      <h1>${t('audit_page_title')}</h1>
+      <p>${t('audit_page_sub')}</p>
     </div>
     
     <div class="card" style="padding:0;">
       <div style="padding:1rem; border-bottom: 1px solid var(--border-color); display:flex; justify-content:space-between; align-items:center;">
-        <span class="badge badge-info">${systemAuditLogs.length} Registered Events</span>
-        <button class="secondary-btn btn-sm" id="clear-audit-logs-btn">Clear Security Log</button>
+        <span class="badge badge-info">${systemAuditLogs.length} ${t('registered_events')}</span>
+        <button class="secondary-btn btn-sm" id="clear-audit-logs-btn">${t('clear_security_log')}</button>
       </div>
       <div class="audit-logs-list" id="admin-full-audit-logs-container">
         ${systemAuditLogs.map(log => `
@@ -1679,7 +2577,7 @@ function renderAdminAudit(container) {
 
   container.querySelector('#clear-audit-logs-btn').addEventListener('click', () => {
     systemAuditLogs = [];
-    showToast('Audit log registry cleared.', 'info');
+    showToast(t('toast_audit_cleared'), 'info');
     renderAdminAudit(container);
   });
 }
@@ -1707,11 +2605,11 @@ function renderCategoriesPageFiltered(filterCategory, container) {
     <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
       <button class="app-back-btn" onclick="window.navigateBackGlobal()" style="padding:5px 14px; font-size:0.8rem;">
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-        <span>Back</span>
+        <span>${t('back')}</span>
       </button>
-      <h1 style="margin:0;">Product & Component Catalog</h1>
+      <h1 style="margin:0;">${t('product_catalog_title')}</h1>
     </div>
-    <p>Browse active procurement inventories mapping directly to validated standard requirements.</p>
+    <p>${t('product_catalog_sub')}</p>
   `;
   targetContainer.appendChild(pageHeader);
 
@@ -1720,26 +2618,26 @@ function renderCategoriesPageFiltered(filterCategory, container) {
   filtersBar.className = 'filters-bar';
   filtersBar.innerHTML = `
     <div class="filter-group">
-      <span class="filter-label">Segment Filter</span>
+      <span class="filter-label">${t('segment_filter')}</span>
       <select id="catalog-filter-select" class="filter-select">
-        <option value="All" ${activeFilter === 'All' ? 'selected' : ''}>All Categories</option>
-        <option value="Medical" ${activeFilter === 'Medical' ? 'selected' : ''}>Medical</option>
-        <option value="Electrical" ${activeFilter === 'Electrical' ? 'selected' : ''}>Electrical</option>
-        <option value="Construction" ${activeFilter === 'Construction' ? 'selected' : ''}>Construction</option>
-        <option value="Laboratory" ${activeFilter === 'Laboratory' ? 'selected' : ''}>Laboratory</option>
-        <option value="Mechanical" ${activeFilter === 'Mechanical' ? 'selected' : ''}>Mechanical</option>
+        <option value="All" ${activeFilter === 'All' ? 'selected' : ''}>${t('all_categories')}</option>
+        <option value="Medical" ${activeFilter === 'Medical' ? 'selected' : ''}>${t('cat_medical')}</option>
+        <option value="Electrical" ${activeFilter === 'Electrical' ? 'selected' : ''}>${t('cat_electrical')}</option>
+        <option value="Construction" ${activeFilter === 'Construction' ? 'selected' : ''}>${t('cat_construction')}</option>
+        <option value="Laboratory" ${activeFilter === 'Laboratory' ? 'selected' : ''}>${t('cat_lab')}</option>
+        <option value="Mechanical" ${activeFilter === 'Mechanical' ? 'selected' : ''}>${t('cat_mechanical')}</option>
       </select>
     </div>
 
     <div class="filter-group">
-      <span class="filter-label">Availability</span>
+      <span class="filter-label">${t('availability')}</span>
       <select id="catalog-avail-select" class="filter-select">
-        <option value="All">All Stocks</option>
-        <option value="In Stock">In Stock Only</option>
+        <option value="All">${t('all_stocks')}</option>
+        <option value="In Stock">${t('in_stock_only')}</option>
       </select>
     </div>
     
-    <input type="text" id="catalog-search-input" class="filter-search-input" placeholder="Search standard products...">
+    <input type="text" id="catalog-search-input" class="filter-search-input" placeholder="${t('search_products_placeholder')}">
   `;
   targetContainer.appendChild(filtersBar);
 
@@ -1764,7 +2662,7 @@ function renderCategoriesPageFiltered(filterCategory, container) {
     });
 
     if (filtered.length === 0) {
-      gridContainer.innerHTML = `<div class="card" style="grid-column: 1/-1; text-align:center; padding:3rem; color:var(--text-muted);">No products match selected audit parameters.</div>`;
+      gridContainer.innerHTML = `<div class="card" style="grid-column: 1/-1; text-align:center; padding:3rem; color:var(--text-muted);">${t('no_products')}</div>`;
       return;
     }
 
@@ -1781,16 +2679,16 @@ function renderCategoriesPageFiltered(filterCategory, container) {
         </div>
         <div class="product-card-specs">
           <div class="spec-line">
-            <span class="spec-label">Manufacturer</span>
+            <span class="spec-label">${t('manufacturer')}</span>
             <span class="spec-val">${p.manufacturer}</span>
           </div>
           <div class="spec-line">
-            <span class="spec-label">Stock Status</span>
+            <span class="spec-label">${t('stock_status')}</span>
             <span class="spec-val">${p.availability}</span>
           </div>
         </div>
         <div class="product-card-footer">
-          <button class="primary-btn btn-sm" onclick="window.showProductProcureAlertGlobal('${p.id}')">Audit Compliance</button>
+          <button class="primary-btn btn-sm" onclick="window.showProductProcureAlertGlobal('${p.id}')">${t('audit_compliance_btn')}</button>
         </div>
       `;
       gridContainer.appendChild(card);
@@ -1823,26 +2721,26 @@ function renderBISPage(container) {
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
         <button class="app-back-btn" onclick="window.navigateBackGlobal()" style="padding:5px 14px; font-size:0.8rem;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          <span>Back</span>
+          <span>${t('back')}</span>
         </button>
-        <h1 style="margin:0;">National Indian Standards Registry (BIS)</h1>
+        <h1 style="margin:0;">${t('bis_page_title')}</h1>
       </div>
-      <p>Search official Bureau of Indian Standards (IS) certifications, directives, and verified manufacturer databases.</p>
+      <p>${t('bis_page_sub')}</p>
     </div>
 
     <div class="filters-bar">
       <div class="filter-group">
-        <span class="filter-label">Industrial Domain</span>
+        <span class="filter-label">${t('industrial_domain')}</span>
         <select id="bis-domain-select" class="filter-select">
-          <option value="All">All Domains</option>
-          <option value="Medical">Medical / Healthcare</option>
-          <option value="Electrical">Electrical Safety</option>
-          <option value="Construction">Infrastructure & Construction</option>
-          <option value="Laboratory">Laboratory Standards</option>
-          <option value="Mechanical">Mechanical Engineering</option>
+          <option value="All">${t('all_domains')}</option>
+          <option value="Medical">${t('medical_domain')}</option>
+          <option value="Electrical">${t('electrical_domain')}</option>
+          <option value="Construction">${t('construction_domain')}</option>
+          <option value="Laboratory">${t('lab_domain')}</option>
+          <option value="Mechanical">${t('mechanical_domain')}</option>
         </select>
       </div>
-      <input type="text" id="bis-search-input" class="filter-search-input" placeholder="Search by Standard code or title...">
+      <input type="text" id="bis-search-input" class="filter-search-input" placeholder="${t('search_bis_placeholder')}">
     </div>
 
     <div class="bis-list" id="bis-standards-grid-container">
@@ -1866,7 +2764,7 @@ function renderBISPage(container) {
     });
 
     if (filtered.length === 0) {
-      gridContainer.innerHTML = `<div class="card" style="grid-column: 1/-1; text-align:center; padding:3rem; color:var(--text-muted);">No standards found matching your criteria.</div>`;
+      gridContainer.innerHTML = `<div class="card" style="grid-column: 1/-1; text-align:center; padding:3rem; color:var(--text-muted);">${t('no_standards')}</div>`;
       return;
     }
 
@@ -1876,7 +2774,7 @@ function renderBISPage(container) {
       card.innerHTML = `
         <div class="bis-full-card-top">
           <span class="bis-card-code">${std.code}</span>
-          <span class="badge badge-success">Mandatory Standard</span>
+          <span class="badge badge-success">${t('mandatory_standard')}</span>
         </div>
         <div>
           <h3 class="bis-full-card-title">${std.title}</h3>
@@ -1884,10 +2782,10 @@ function renderBISPage(container) {
         </div>
         <p class="bis-full-card-description">${std.description}</p>
         <div class="bis-full-card-meta">
-          <span>Committee: ${std.committee.split(' ')[0]}</span>
-          <span>Published: ${std.date}</span>
+          <span>${t('committee_label')} ${std.committee.split(' ')[0]}</span>
+          <span>${t('published_label')} ${std.date}</span>
         </div>
-        <button class="secondary-btn btn-sm btn-full" onclick="window.showBISModalGlobal('${std.code}')">View Verification Protocol</button>
+        <button class="secondary-btn btn-sm btn-full" onclick="window.showBISModalGlobal('${std.code}')">${t('view_protocol_btn')}</button>
       `;
       gridContainer.appendChild(card);
     });
@@ -1909,52 +2807,52 @@ function renderRegisterPage(container) {
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
         <button class="app-back-btn" onclick="window.navigateBackGlobal()" style="padding:5px 14px; font-size:0.8rem;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          <span>Back</span>
+          <span>${t('back')}</span>
         </button>
-        <h1 style="margin:0;">Account Registration</h1>
+        <h1 style="margin:0;">${t('account_reg_title')}</h1>
       </div>
-      <p>Select an account type below to register for specialized platform capabilities and workflows.</p>
+      <p>${t('account_reg_sub')}</p>
     </div>
 
     <!-- Registration cards grid -->
     <div class="card" style="max-width:720px; display:flex; flex-direction:column; gap:1.2rem; margin-bottom:1.5rem;">
-      <p class="settings-section-title">Available Portal Accounts</p>
+      <p class="settings-section-title">${t('available_accounts')}</p>
 
       <div class="settings-reg-grid">
         <!-- Buyer Card -->
         <div class="settings-reg-card" style="--card-accent:#3b82f6; --card-icon-bg:#dbeafe;" id="reg-card-buyer">
           <div class="reg-card-icon">🏢</div>
-          <div class="reg-card-title">Register as Buyer</div>
-          <div class="reg-card-desc">Access procurement catalog, submit RFQs, and track BIS-certified vendors.</div>
+          <div class="reg-card-title">${t('reg_as_buyer')}</div>
+          <div class="reg-card-desc">${t('reg_as_buyer_desc')}</div>
           <button class="reg-card-btn" id="reg-btn-buyer">
-            Register Now →
+            ${t('register_now')}
           </button>
         </div>
 
         <!-- Seller Card -->
         <div class="settings-reg-card" style="--card-accent:#10b981; --card-icon-bg:#d1fae5;" id="reg-card-seller">
           <div class="reg-card-icon">🏭</div>
-          <div class="reg-card-title">Register as Seller</div>
-          <div class="reg-card-desc">List your certified products, manage BIS certifications, and respond to buyer RFQs.</div>
+          <div class="reg-card-title">${t('reg_as_seller')}</div>
+          <div class="reg-card-desc">${t('reg_as_seller_desc')}</div>
           <button class="reg-card-btn" style="color:#10b981;" id="reg-btn-seller">
-            Register Now →
+            ${t('register_now')}
           </button>
         </div>
 
         <!-- Admin Card -->
         <div class="settings-reg-card" style="--card-accent:#8b5cf6; --card-icon-bg:#ede9fe;" id="reg-card-admin">
           <div class="reg-card-icon">🛡</div>
-          <div class="reg-card-title">Register as Admin</div>
-          <div class="reg-card-desc">Manage platform users, review compliance audits, and oversee vendor certifications.</div>
+          <div class="reg-card-title">${t('reg_as_admin')}</div>
+          <div class="reg-card-desc">${t('reg_as_admin_desc')}</div>
           <button class="reg-card-btn" style="color:#8b5cf6;" id="reg-btn-admin">
-            Register Now →
+            ${t('register_now')}
           </button>
         </div>
       </div>
 
       <div style="background:var(--bg-primary); border-radius:var(--radius-sm); padding:12px 16px; margin-top:0.5rem; font-size:0.82rem; color:var(--text-muted); display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-        <span>Already have an active account?</span>
-        <button class="secondary-btn" onclick="toggleModal('auth-modal', true)" style="font-size:0.8rem; padding:5px 14px;">Sign In to ASPEN</button>
+        <span>${t('already_have_account')}</span>
+        <button class="secondary-btn" onclick="toggleModal('auth-modal', true)" style="font-size:0.8rem; padding:5px 14px;">${t('sign_in_aspen')}</button>
       </div>
     </div>
   `;
@@ -1984,17 +2882,17 @@ function renderSettingsPage(container) {
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
         <button class="app-back-btn" onclick="window.navigateBackGlobal()" style="padding:5px 14px; font-size:0.8rem;">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
-          <span>Back</span>
+          <span>${t('back')}</span>
         </button>
-        <h1 style="margin:0;">Settings</h1>
+        <h1 style="margin:0;">${t('settings_title')}</h1>
       </div>
-      <p>Manage your account preferences and session settings.</p>
+      <p>${t('settings_sub')}</p>
     </div>
 
     <!-- Account section -->
     <div class="card" style="max-width:660px; display:flex; flex-direction:column; gap:1.4rem; margin-bottom:1.5rem;">
       <div>
-        <p class="settings-section-title">Current Account</p>
+        <p class="settings-section-title">${t('current_account')}</p>
         <div style="display:flex; align-items:center; gap:14px; padding:14px; background:var(--bg-primary); border-radius:var(--radius-md);">
           <div style="width:48px; height:48px; border-radius:50%; background:var(--accent-navy); color:#fff; display:flex; align-items:center; justify-content:center; font-size:1.2rem; font-weight:800; flex-shrink:0;">
             ${currentUser.initials}
@@ -2012,15 +2910,15 @@ function renderSettingsPage(container) {
       <!-- Profile fields -->
       <div style="display:grid; grid-template-columns:1fr 1fr; gap:12px;">
         <div class="form-group">
-          <label>Account Name</label>
+          <label>${t('account_name')}</label>
           <input type="text" value="${currentUser.name}" readonly style="background-color:var(--bg-primary);">
         </div>
         <div class="form-group">
-          <label>Organization</label>
+          <label>${t('organization')}</label>
           <input type="text" value="${currentUser.org}" readonly style="background-color:var(--bg-primary);">
         </div>
         <div class="form-group" style="grid-column:1/-1;">
-          <label>Email Address</label>
+          <label>${t('email_addr')}</label>
           <input type="email" value="${currentUser.email}" readonly style="background-color:var(--bg-primary);">
         </div>
       </div>
