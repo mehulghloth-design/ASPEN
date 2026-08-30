@@ -2558,12 +2558,10 @@ function renderSellerOpportunities(container) {
             // Check if standard is satisfied (confidenceScore >= 80 and not IS UNKNOWN)
             const satisfiesBIS = rfq.bisSatisfied !== false && rfq.standard !== 'IS UNKNOWN';
             const hasAdminOverride = rfq.adminOverride === true || (SYSTEM_ADMIN_OVERRIDES && SYSTEM_ADMIN_OVERRIDES[rfq.id] === true);
+            const isCertifiedMfr = matchesExact || matchesCat || (rfq.standard && rfq.standard.startsWith('IS') && rfq.standard !== 'IS UNKNOWN');
 
-            // Seller is qualified if they match standard/category OR if standard is active IS code
-            const isCertifiedMfr = matchesExact || matchesCat || (rfq.standard && rfq.standard !== 'IS UNKNOWN');
-
-            // Bidding is ONLY allowed if: (satisfies BIS OR has manual Admin override) AND seller is certified manufacturer
-            const biddingAllowed = (satisfiesBIS || hasAdminOverride) && isCertifiedMfr;
+            // Bidding is explicitly allowed if Admin granted exemption (hasAdminOverride) OR if RFQ satisfies BIS standards and Seller is certified
+            const biddingAllowed = hasAdminOverride || (satisfiesBIS && isCertifiedMfr);
 
             return `
               <tr>
