@@ -2008,6 +2008,7 @@ function populateAllSearchResults(results) {
 
 function draftSpecificRecommendation(r, customQty) {
   const confidenceScore = r.match_metadata?.confidence_score || r.bisSuitabilityScore || 85.0;
+  const bisSatisfied = confidenceScore >= 80.0;
   const qty = customQty || (document.getElementById('bis-modal-qty-input')?.value) || '10,000 units';
 
   const newRfq = {
@@ -2015,13 +2016,16 @@ function draftSpecificRecommendation(r, customQty) {
     product: r.title || 'Selected BIS Compliant Product',
     qty: qty,
     date: new Date().toISOString().split('T')[0],
-    status: 'Active',
+    status: bisSatisfied ? 'Active' : 'Awaiting Admin Override',
     bids: 0,
     standard: r.is_code || r.code || 'IS 12345',
     buyer: currentUser.email || 'buyer@aspen.gov',
     org: currentUser.org || 'Verified Buyer',
     bisSuitabilityScore: confidenceScore,
-    bisSuitabilityStatus: confidenceScore >= 80 ? 'Fully BIS Compliant' : 'Partially Compliant',
+    bisSatisfied: bisSatisfied,
+    biddingAllowed: bisSatisfied,
+    adminOverride: false,
+    bisSuitabilityStatus: bisSatisfied ? '✓ Satisfies BIS Standards' : '⚠️ Below Threshold (Requires Admin Exemption)',
     bisSpecs: buildSpecsDescription(r.specifications) || 'Standard technical tolerances and lab testing rules apply.',
     bisSuitabilityDetails: `${confidenceScore.toFixed(1)}% suitability match calculated by AI engine against Bureau of Indian Standards testing guidelines.`
   };
@@ -2036,10 +2040,14 @@ function draftSpecificRecommendation(r, customQty) {
     }
   }
 
-  addNotification('info', `Tender Drafted: RFQ for ${newRfq.product} (${newRfq.id}) published against ${newRfq.standard}.`);
-  addAuditLog(currentUser.email || 'buyer@aspen.gov', `Published official tender RFQ ${newRfq.id} requesting compliance against ${newRfq.standard}.`);
+  addNotification(bisSatisfied ? 'info' : 'warning', `Tender Drafted: RFQ for ${newRfq.product} (${newRfq.id}) published against ${newRfq.standard}. ${bisSatisfied ? 'Satisfies BIS Standards.' : 'Requires Admin Override Exemption.'}`);
+  addAuditLog(currentUser.email || 'buyer@aspen.gov', `Published official tender RFQ ${newRfq.id} (${confidenceScore.toFixed(1)}% BIS score against ${newRfq.standard}).`);
 
-  showToast(`Drafted official RFQ ${newRfq.id} for "${newRfq.product}" (${qty})!`, 'success');
+  if (!bisSatisfied) {
+    showToast(`Drafted RFQ ${newRfq.id}! Warning: Score ${confidenceScore.toFixed(1)}% is below 80% threshold. Sent to Administrator for Access Exemption.`, 'info');
+  } else {
+    showToast(`Drafted official RFQ ${newRfq.id} for "${newRfq.product}" (${qty})!`, 'success');
+  }
   navigateTo('active');
 }
 
@@ -2212,8 +2220,9 @@ function showNLUModal() {
 function getAllSystemRFQs() {
   const map = new Map();
   const sampleRfqs = [
-    { id: 'RFQ-2026-004', product: 'Cotton Bandage Cloth', qty: '12,500 m', date: '2026-08-29', status: 'Active', bids: 3, standard: 'IS 758', buyer: 'buyer@aspen.gov.in', org: 'National Health Authority' },
-    { id: 'RFQ-2026-002', product: 'Laboratory Glass Tubes', qty: '5,000 units', date: '2026-08-15', status: 'Bidding Closed', bids: 8, standard: 'IS 4381', buyer: 'a.saxena@cpwd.gov.in', org: 'Central Public Works Dept (CPWD)' }
+    { id: 'RFQ-2026-004', product: 'Cotton Bandage Cloth', qty: '12,500 m', date: '2026-08-29', status: 'Active', bids: 3, standard: 'IS 758', buyer: 'buyer@aspen.gov.in', org: 'National Health Authority', bisSuitabilityScore: 94.2, bisSatisfied: true, biddingAllowed: true, adminOverride: false },
+    { id: 'RFQ-2026-002', product: 'Laboratory Glass Tubes', qty: '5,000 units', date: '2026-08-15', status: 'Bidding Closed', bids: 8, standard: 'IS 4381', buyer: 'a.saxena@cpwd.gov.in', org: 'Central Public Works Dept (CPWD)', bisSuitabilityScore: 88.0, bisSatisfied: true, biddingAllowed: true, adminOverride: false },
+    { id: 'RFQ-2026-009', product: 'Custom High-Pressure Oxygen Valve (Non-Standard Specs)', qty: '2,500 units', date: '2026-08-30', status: 'Awaiting Admin Override', bids: 0, standard: 'IS 1234', buyer: 'buyer@aspen.gov.in', org: 'Custom Medical Hub', bisSuitabilityScore: 68.4, bisSatisfied: false, biddingAllowed: false, adminOverride: false }
   ];
   sampleRfqs.forEach(r => map.set(r.id, r));
 
@@ -2241,6 +2250,7 @@ function createRFQFromParsed() {
     ? parseFloat(parsedSearchResult.matchedStandard.committee.replace(/[^0-9.]/g, '')) || 86.5
     : 86.5;
 
+  const bisSatisfied = confidenceScore >= 80.0;
   const specsText = buildSpecsDescription(parsedSearchResult.matchedStandard?.specifications || {});
 
   const newRfq = {
@@ -2248,13 +2258,16 @@ function createRFQFromParsed() {
     product: parsedSearchResult.product,
     qty: parsedSearchResult.quantity === 'Not Specified' ? '10,000 units' : parsedSearchResult.quantity,
     date: new Date().toISOString().split('T')[0],
-    status: 'Active',
+    status: bisSatisfied ? 'Active' : 'Awaiting Admin Override',
     bids: 0,
     standard: parsedSearchResult.matchedStandard ? parsedSearchResult.matchedStandard.code : 'IS 758',
     buyer: currentUser.email || 'buyer@aspen.gov',
     org: currentUser.org || 'Verified Buyer',
     bisSuitabilityScore: confidenceScore,
-    bisSuitabilityStatus: confidenceScore >= 80 ? 'Fully BIS Compliant' : 'Partially Compliant',
+    bisSatisfied: bisSatisfied,
+    biddingAllowed: bisSatisfied,
+    adminOverride: false,
+    bisSuitabilityStatus: bisSatisfied ? '✓ Satisfies BIS Standards' : '⚠️ Below Threshold (Requires Admin Exemption)',
     bisSpecs: specsText || 'Standard technical tolerances and laboratory test rules apply.',
     bisSuitabilityDetails: `${confidenceScore.toFixed(1)}% suitability score calculated by AI NLU engine against active Bureau of Indian Standards parameters.`
   };
@@ -2270,10 +2283,14 @@ function createRFQFromParsed() {
   }
 
   // Add notification and audit log
-  addNotification('info', `Tender Drafted: RFQ for ${newRfq.product} (${newRfq.id}) published with ${newRfq.bisSuitabilityScore.toFixed(1)}% BIS Suitability score.`);
+  addNotification(bisSatisfied ? 'info' : 'warning', `Tender Drafted: RFQ for ${newRfq.product} (${newRfq.id}) published with ${newRfq.bisSuitabilityScore.toFixed(1)}% BIS Suitability score.`);
   addAuditLog(currentUser.email, `Published official tender RFQ ${newRfq.id} (${newRfq.bisSuitabilityScore.toFixed(1)}% BIS Suitability match against ${newRfq.standard}).`);
 
-  showToast(`Successfully created ${newRfq.id}! BIS Suitability Score: ${newRfq.bisSuitabilityScore.toFixed(1)}%`, 'success');
+  if (!bisSatisfied) {
+    showToast(`Drafted RFQ ${newRfq.id}! Score ${confidenceScore.toFixed(1)}% requires Administrator Access Exemption.`, 'info');
+  } else {
+    showToast(`Successfully created ${newRfq.id}! BIS Suitability Score: ${newRfq.bisSuitabilityScore.toFixed(1)}%`, 'success');
+  }
   navigateTo('active');
 }
 
@@ -2527,10 +2544,14 @@ function renderSellerOpportunities(container) {
         </thead>
         <tbody>
           ${allBuyerRfqs.map(rfq => {
-            // Qualify seller if seller has certified product for standard OR category match OR active Indian Standard (IS code)
             const matchesExact = currentUser.products.some(p => p.standard === rfq.standard && p.status === 'Certified');
             const matchesCat = currentUser.products.some(p => p.category === rfq.industry || p.category === rfq.category);
-            const isQualified = matchesExact || matchesCat || (rfq.standard && rfq.standard.startsWith('IS'));
+            const satisfiesBIS = rfq.bisSatisfied !== undefined ? rfq.bisSatisfied : true;
+            const hasAdminOverride = rfq.adminOverride === true;
+
+            // Bidding is allowed if RFQ satisfies BIS standards (or has Admin override) AND seller has matching standard/category
+            const isQualified = (matchesExact || matchesCat || (rfq.standard && rfq.standard.startsWith('IS')));
+            const biddingAllowed = (satisfiesBIS || hasAdminOverride) && isQualified;
 
             return `
               <tr>
@@ -2540,14 +2561,14 @@ function renderSellerOpportunities(container) {
                 <td>${rfq.qty}</td>
                 <td>${rfq.date}</td>
                 <td>
-                  ${isQualified 
-                    ? `<span class="badge badge-success">${t('qualified_mfr')}</span>` 
-                    : `<span class="badge badge-danger">${t('std_uncertified')}</span>`
+                  ${biddingAllowed 
+                    ? `<span class="badge badge-success">${hasAdminOverride ? '✓ Admin Exemption Granted' : t('qualified_mfr')}</span>` 
+                    : `<span class="badge badge-warning">⚠️ Non-Standard (Awaiting Admin Exemption)</span>`
                   }
                 </td>
                 <td>
-                  <button class="primary-btn btn-sm" ${!isQualified ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} onclick="window.submitSellerBidGlobal('${rfq.id}')">
-                    ${t('submit_bid')}
+                  <button class="primary-btn btn-sm" ${!biddingAllowed ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} onclick="window.submitSellerBidGlobal('${rfq.id}')">
+                    ${biddingAllowed ? t('submit_bid') : 'Blocked: Awaiting Admin Exemption'}
                   </button>
                 </td>
               </tr>
@@ -2738,6 +2759,9 @@ function renderAdminDashboard(container) {
         <tbody id="admin-rfq-tbody">
           ${allRfqs.map(rfq => {
             const score = rfq.bisSuitabilityScore || 85.0;
+            const satisfiesBIS = rfq.bisSatisfied !== undefined ? rfq.bisSatisfied : (score >= 80.0);
+            const hasAdminOverride = rfq.adminOverride === true;
+
             return `
             <tr>
               <td class="table-cell-title">${rfq.id}</td>
@@ -2746,7 +2770,12 @@ function renderAdminDashboard(container) {
               <td>
                 <span class="bis-card-code" style="cursor:pointer;" onclick="window.showBISModalGlobal('${rfq.standard}')">${rfq.standard}</span>
                 <div style="margin-top:4px;">
-                  <span class="badge ${score >= 80 ? 'badge-success' : 'badge-info'} btn-sm">${score.toFixed(1)}% BIS Match</span>
+                  ${satisfiesBIS 
+                    ? `<span class="badge badge-success btn-sm">✓ Satisfies Standard (${score.toFixed(1)}%)</span>`
+                    : hasAdminOverride 
+                      ? `<span class="badge badge-success btn-sm">✓ Admin Exemption (${score.toFixed(1)}%)</span>`
+                      : `<span class="badge badge-warning btn-sm">⚠️ Below Threshold (${score.toFixed(1)}%)</span>`
+                  }
                 </div>
               </td>
               <td>
@@ -2754,13 +2783,21 @@ function renderAdminDashboard(container) {
                 <div style="font-size:0.75rem; color:var(--text-muted);">${rfq.buyer || 'buyer@aspen.gov'}</div>
               </td>
               <td>${rfq.date}</td>
-              <td><span class="badge ${rfq.status === 'Active' ? 'badge-success' : 'badge-info'}" id="admin-rfq-status-${rfq.id}">${rfq.status}</span></td>
-              <td style="display:flex; gap:6px;">
+              <td>
+                <span class="badge ${satisfiesBIS || hasAdminOverride ? 'badge-success' : 'badge-warning'}" id="admin-rfq-status-${rfq.id}">
+                  ${rfq.status || (satisfiesBIS ? 'Active' : 'Awaiting Override')}
+                </span>
+              </td>
+              <td style="display:flex; gap:6px; flex-wrap:wrap; align-items:center;">
                 <button class="secondary-btn btn-sm" onclick="window.showBISSuitabilityReportGlobal('${rfq.id}')">BIS Report</button>
-                <button class="primary-btn btn-sm" id="admin-rfq-btn-${rfq.id}" onclick="window.adminAuditRFQGlobal('${rfq.id}')">Audit & Approve</button>
+                ${(!satisfiesBIS && !hasAdminOverride)
+                  ? `<button class="primary-btn btn-sm" style="background:#f59e0b; border:none; font-weight:700;" onclick="window.adminOverrideBISSatisfactionGlobal('${rfq.id}')">Grant Admin Exemption</button>`
+                  : `<button class="primary-btn btn-sm" id="admin-rfq-btn-${rfq.id}" onclick="window.adminAuditRFQGlobal('${rfq.id}')">Audit & Approve</button>`
+                }
               </td>
             </tr>
-          `}).join('')}
+            `;
+          }).join('')}
         </tbody>
       </table>
     </div>
@@ -2785,6 +2822,36 @@ window.adminAuditRFQGlobal = (rfqId) => {
   addNotification('success', `Admin Compliance Audit: Tender ${rfqId} has been audited & verified by Administrator.`);
   addAuditLog(currentUser.email || 'admin@aspen.gov', `Administrator audited and approved tender RFQ ${rfqId}.`);
   showToast(`Tender ${rfqId} audited & verified successfully!`, 'success');
+};
+
+window.adminOverrideBISSatisfactionGlobal = (rfqId) => {
+  const allRfqs = getAllSystemRFQs();
+  const rfq = allRfqs.find(r => r.id === rfqId);
+  if (rfq) {
+    rfq.adminOverride = true;
+    rfq.biddingAllowed = true;
+    rfq.status = 'Active (Admin Override Granted)';
+  }
+
+  [currentUser, MOCK_USERS.buyer, MOCK_USERS.seller].forEach(u => {
+    if (u && u.rfqs) {
+      const match = u.rfqs.find(r => r.id === rfqId);
+      if (match) {
+        match.adminOverride = true;
+        match.biddingAllowed = true;
+        match.status = 'Active (Admin Override Granted)';
+      }
+    }
+  });
+
+  addNotification('warning', `Admin Exemption: Special access granted for non-standard RFQ ${rfqId} by Administrator.`);
+  addAuditLog(currentUser.email || 'admin@aspen.gov.in', `Granted Administrator Special Access Override for RFQ ${rfqId} (below standard BIS threshold). Bidding enabled for sellers.`);
+  showToast(`Special Access Exemption Granted for ${rfqId}! Bidding enabled for sellers.`, 'success');
+
+  if (activePage === 'admin-dashboard') {
+    const container = document.getElementById('app-content-body');
+    if (container) renderAdminDashboard(container);
+  }
 };
 
 window.showBISSuitabilityReportGlobal = (rfqId) => {
