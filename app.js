@@ -253,9 +253,9 @@ const TRANSLATIONS = {
     seller_role: "Seller Role",
     admin_role: "Administrator",
     home: "Home",
+    category: "Category",
     bis_standards: "BIS Standards",
-    vendor_directory: "Vendor Directory",
-    compliance_suite: "Compliance Suite",
+    my_products: "My Products",
     audit_logs: "Audit Logs",
     settings: "Settings",
     back: "Back",
@@ -425,9 +425,9 @@ const TRANSLATIONS = {
     seller_role: "विक्रेता भूमिका",
     admin_role: "प्रशासक भूमिका",
     home: "मुख्य पृष्ठ",
+    category: "श्रेणी",
     bis_standards: "बीआईएस मानक",
-    vendor_directory: "विक्रेता निर्देशिका",
-    compliance_suite: "अनुपालन सुइट",
+    my_products: "मेरे उत्पाद",
     audit_logs: "ऑडिट लॉग",
     settings: "सेटिंग्स",
     back: "वापस",
@@ -597,9 +597,9 @@ const TRANSLATIONS = {
     seller_role: "విక్రేత పాత్ర",
     admin_role: "అడ్మినిస్ట్రేటర్",
     home: "ముఖ్య పేజీ",
+    category: "వర్గం",
     bis_standards: "బిఐఎస్ ప్రమాణాలు",
-    vendor_directory: "విక్రేతల డైరెక్టరీ",
-    compliance_suite: "సమ్మతి సూట్",
+    my_products: "నా ఉత్పత్తులు",
     audit_logs: "ఆడిట్ లాగ్స్",
     settings: "సెట్టింగ్‌లు",
     back: "వెనకకు",
@@ -1422,34 +1422,33 @@ function renderSidebarNav() {
   if (currentUser.role === 'public') {
     menuItems = [
       { id: 'home', label: t('home'), icon: NAV_ICONS.home },
-      { id: 'categories', label: t('bis_standards'), icon: NAV_ICONS.categories },
-      { id: 'active', label: t('vendor_directory'), icon: NAV_ICONS.active },
-      { id: 'bis', label: t('compliance_suite'), icon: NAV_ICONS.bis },
+      { id: 'categories', label: t('category'), icon: NAV_ICONS.categories },
+      { id: 'bis', label: t('bis_standards'), icon: NAV_ICONS.bis },
       { id: 'register', label: t('register_tab'), icon: NAV_ICONS.register },
       { id: 'settings', label: t('settings'), icon: NAV_ICONS.settings }
     ];
   } else if (currentUser.role === 'buyer') {
     menuItems = [
       { id: 'home', label: t('home'), icon: NAV_ICONS.home },
-      { id: 'categories', label: t('bis_standards'), icon: NAV_ICONS.categories },
-      { id: 'active', label: t('vendor_directory'), icon: NAV_ICONS.active },
-      { id: 'bis', label: t('compliance_suite'), icon: NAV_ICONS.bis },
+      { id: 'categories', label: t('category'), icon: NAV_ICONS.categories },
+      { id: 'bis', label: t('bis_standards'), icon: NAV_ICONS.bis },
+      { id: 'active', label: t('active_tenders'), icon: NAV_ICONS.active },
       { id: 'register', label: t('register_tab'), icon: NAV_ICONS.register }
     ];
   } else if (currentUser.role === 'seller') {
     menuItems = [
       { id: 'home', label: t('home'), icon: NAV_ICONS.home },
-      { id: 'my-products', label: t('vendor_directory'), icon: NAV_ICONS.products },
-      { id: 'active', label: t('compliance_suite'), icon: NAV_ICONS.active },
+      { id: 'categories', label: t('category'), icon: NAV_ICONS.categories },
       { id: 'bis', label: t('bis_standards'), icon: NAV_ICONS.bis },
+      { id: 'my-products', label: t('my_products'), icon: NAV_ICONS.products },
       { id: 'register', label: t('register_tab'), icon: NAV_ICONS.register }
     ];
   } else if (currentUser.role === 'admin') {
     menuItems = [
       { id: 'admin-dashboard', label: t('home'), icon: NAV_ICONS.home },
-      { id: 'admin-users', label: t('audit_logs'), icon: NAV_ICONS.active },
+      { id: 'categories', label: t('category'), icon: NAV_ICONS.categories },
       { id: 'bis', label: t('bis_standards'), icon: NAV_ICONS.bis },
-      { id: 'categories', label: t('compliance_suite'), icon: NAV_ICONS.categories },
+      { id: 'admin-users', label: t('audit_logs'), icon: NAV_ICONS.active },
       { id: 'settings', label: t('settings'), icon: NAV_ICONS.settings }
     ];
   }
