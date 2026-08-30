@@ -2223,6 +2223,7 @@ function getAllSystemRFQs() {
   const sampleRfqs = [
     { id: 'RFQ-2026-004', product: 'Cotton Bandage Cloth', qty: '12,500 m', date: '2026-08-29', status: 'Active', bids: 3, standard: 'IS 758', buyer: 'buyer@aspen.gov.in', org: 'National Health Authority', bisSuitabilityScore: 94.2, bisSatisfied: true, biddingAllowed: true, adminOverride: false },
     { id: 'RFQ-2026-002', product: 'Laboratory Glass Tubes', qty: '5,000 units', date: '2026-08-15', status: 'Bidding Closed', bids: 8, standard: 'IS 4381', buyer: 'a.saxena@cpwd.gov.in', org: 'Central Public Works Dept (CPWD)', bisSuitabilityScore: 88.0, bisSatisfied: true, biddingAllowed: true, adminOverride: false },
+    { id: 'RFQ-2026-007', product: 'Unknown Medical Apparatus (Non-Standard Specs)', qty: '1,000 units', date: '2026-08-30', status: 'Awaiting Admin Override', bids: 0, standard: 'IS UNKNOWN', buyer: 'buyer@aspen.gov.in', org: 'NHA India', bisSuitabilityScore: 79.8, bisSatisfied: false, biddingAllowed: false, adminOverride: false },
     { id: 'RFQ-2026-009', product: 'Custom High-Pressure Oxygen Valve (Non-Standard Specs)', qty: '2,500 units', date: '2026-08-30', status: 'Awaiting Admin Override', bids: 0, standard: 'IS 1234', buyer: 'buyer@aspen.gov.in', org: 'Custom Medical Hub', bisSuitabilityScore: 68.4, bisSatisfied: false, biddingAllowed: false, adminOverride: false }
   ];
   sampleRfqs.forEach(r => map.set(r.id, r));
@@ -2553,24 +2554,30 @@ function renderSellerOpportunities(container) {
           ${allBuyerRfqs.map(rfq => {
             const matchesExact = currentUser.products.some(p => p.standard === rfq.standard && p.status === 'Certified');
             const matchesCat = currentUser.products.some(p => p.category === rfq.industry || p.category === rfq.category);
-            const satisfiesBIS = rfq.bisSatisfied !== undefined ? rfq.bisSatisfied : true;
-            const hasAdminOverride = rfq.adminOverride === true;
 
-            // Bidding is allowed if RFQ satisfies BIS standards (or has Admin override) AND seller has matching standard/category
-            const isQualified = (matchesExact || matchesCat || (rfq.standard && rfq.standard.startsWith('IS')));
-            const biddingAllowed = (satisfiesBIS || hasAdminOverride) && isQualified;
+            // Check if standard is satisfied (confidenceScore >= 80 and not IS UNKNOWN)
+            const satisfiesBIS = rfq.bisSatisfied !== false && rfq.standard !== 'IS UNKNOWN';
+            const hasAdminOverride = rfq.adminOverride === true || (SYSTEM_ADMIN_OVERRIDES && SYSTEM_ADMIN_OVERRIDES[rfq.id] === true);
+
+            // Seller is qualified if they match standard/category OR if standard is active IS code
+            const isCertifiedMfr = matchesExact || matchesCat || (rfq.standard && rfq.standard !== 'IS UNKNOWN');
+
+            // Bidding is ONLY allowed if: (satisfies BIS OR has manual Admin override) AND seller is certified manufacturer
+            const biddingAllowed = (satisfiesBIS || hasAdminOverride) && isCertifiedMfr;
 
             return `
               <tr>
                 <td class="table-cell-title">${rfq.id}</td>
                 <td>${rfq.product}</td>
                 <td><span class="bis-card-code">${rfq.standard}</span></td>
-                <td>${rfq.qty}</td>
+                <td>${rfq.qty || rfq.quantity || '1,000 units'}</td>
                 <td>${rfq.date}</td>
                 <td>
-                  ${biddingAllowed 
-                    ? `<span class="badge badge-success">${hasAdminOverride ? '✓ Admin Exemption Granted' : t('qualified_mfr')}</span>` 
-                    : `<span class="badge badge-warning">⚠️ Non-Standard (Awaiting Admin Exemption)</span>`
+                  ${hasAdminOverride 
+                    ? `<span class="badge badge-success">✓ Admin Exemption Granted</span>` 
+                    : satisfiesBIS 
+                      ? `<span class="badge badge-success">${t('qualified_mfr')}</span>`
+                      : `<span class="badge badge-warning">⚠️ Non-Standard (Awaiting Admin Exemption)</span>`
                   }
                 </td>
                 <td>
