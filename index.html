@@ -327,35 +327,69 @@
     <div class="modal-card" style="max-width:600px;">
       <button class="modal-close" id="bis-detail-close" style="background:none; border:none;">&times;</button>
       <div class="modal-header-section" style="margin-bottom:20px;">
+      <div style="display:flex; align-items:center; justify-content:space-between; flex-wrap:wrap; gap:8px;">
         <span class="bis-card-code" id="bis-modal-code">IS 0000</span>
-        <h2 id="bis-modal-title" style="font-size:1.35rem; margin-top:8px; margin-bottom:4px;">Standard Title</h2>
-        <p class="meta-tag" id="bis-modal-industry" style="font-weight:700; font-size:0.8rem;">Segment</p>
+        <span class="badge badge-success" id="bis-modal-match-badge" style="font-size:0.8rem; padding:4px 10px;">100% Verified</span>
       </div>
+      <h2 id="bis-modal-title" style="font-size:1.35rem; margin-top:8px; margin-bottom:4px;">Standard Title</h2>
+      <p class="meta-tag" id="bis-modal-industry" style="font-weight:700; font-size:0.8rem;">Segment</p>
       
-      <div class="bis-detail-tabs" style="display:flex; gap:16px; border-bottom:1px solid var(--border-line); margin-bottom:16px;">
-        <button class="bis-tab-btn active" data-tab="overview" style="background:none; border:none; padding-bottom:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">Overview</button>
-        <button class="bis-tab-btn" data-tab="compliance" style="background:none; border:none; padding-bottom:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">Compliance Details</button>
+      <div class="bis-detail-tabs" style="display:flex; gap:16px; border-bottom:1px solid var(--border-line); margin-bottom:16px; margin-top:12px;">
+        <button class="bis-tab-btn active" data-tab="overview" style="background:none; border:none; padding-bottom:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">Overview & Specs</button>
+        <button class="bis-tab-btn" data-tab="compliance" style="background:none; border:none; padding-bottom:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">Compliance Rules</button>
         <button class="bis-tab-btn" data-tab="manufacturers" style="background:none; border:none; padding-bottom:8px; cursor:pointer; font-weight:600; font-size:0.85rem;">Certified Manufacturers</button>
       </div>
 
       <div class="bis-tab-content active" id="bis-tab-overview">
-        <p id="bis-modal-description" style="font-size:0.88rem; color:var(--text-sub); margin-bottom:16px;">Details...</p>
-        <div class="detail-bullets-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:0.85rem;">
+        <p id="bis-modal-description" style="font-size:0.88rem; color:var(--text-sub); margin-bottom:16px; line-height:1.5;">Details...</p>
+
+        <!-- Ordered Technical Specifications Container Card -->
+        <div style="margin-bottom:16px;">
+          <h4 style="font-size:0.85rem; text-transform:uppercase; color:var(--text-muted); margin-bottom:8px;">Technical Specifications (Ordered Parameters)</h4>
+          <div id="bis-modal-specs-container" style="display:grid; grid-template-columns:1fr 1fr; gap:8px; font-size:0.82rem;">
+            <!-- Populated dynamically by JS -->
+          </div>
+        </div>
+
+        <div class="detail-bullets-grid" style="display:grid; grid-template-columns:1fr 1fr; gap:12px; font-size:0.85rem; background:var(--bg-primary); padding:12px; border-radius:var(--radius-sm); margin-bottom:16px;">
           <div>
-            <strong style="color:var(--text-muted); display:block; font-size:0.75rem; text-transform:uppercase;">Relevance Target</strong>
-            <span id="bis-modal-relevance" style="font-weight:600;">High</span>
+            <strong style="color:var(--text-muted); display:block; font-size:0.72rem; text-transform:uppercase;">BIS Suitability Score</strong>
+            <span id="bis-modal-relevance" style="font-weight:700; color:var(--primary);">High Match</span>
           </div>
           <div>
-            <strong style="color:var(--text-muted); display:block; font-size:0.75rem; text-transform:uppercase;">Published Date</strong>
-            <span id="bis-modal-date" style="font-weight:600;">2024</span>
+            <strong style="color:var(--text-muted); display:block; font-size:0.72rem; text-transform:uppercase;">Status & Date</strong>
+            <span id="bis-modal-date" style="font-weight:600;">Active</span>
           </div>
           <div>
-            <strong style="color:var(--text-muted); display:block; font-size:0.75rem; text-transform:uppercase;">Committee Name</strong>
+            <strong style="color:var(--text-muted); display:block; font-size:0.72rem; text-transform:uppercase;">Committee / AI Match</strong>
             <span id="bis-modal-committee" style="font-weight:600;">TED 14</span>
           </div>
           <div>
-            <strong style="color:var(--text-muted); display:block; font-size:0.75rem; text-transform:uppercase;">Directives</strong>
+            <strong style="color:var(--text-muted); display:block; font-size:0.72rem; text-transform:uppercase;">Directives</strong>
             <span style="font-weight:600; color:var(--green-text);">Mandatory Standard</span>
+          </div>
+        </div>
+
+        <!-- Quantity Selection Block (Buyer: Procurement Quantity Needed | Seller: Allowed Supply Capacity) -->
+        <div id="bis-modal-qty-block" style="background:#f8fafc; border:1px solid var(--border-line); padding:14px; border-radius:var(--radius-sm); margin-top:12px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
+            <label id="bis-modal-qty-label" style="font-weight:700; font-size:0.85rem; color:var(--text-main);">
+              Required Quantity (Units/Meters):
+            </label>
+            <span id="bis-modal-qty-role-indicator" style="font-size:0.75rem; color:var(--text-muted);">Buyer Procurement Selection</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <div style="display:flex; align-items:center; border:1px solid var(--border-line); border-radius:var(--radius-sm); overflow:hidden; background:#fff;">
+              <button type="button" id="bis-modal-qty-minus" style="padding:6px 12px; background:#f1f5f9; border:none; cursor:pointer; font-weight:700;">-</button>
+              <input type="text" id="bis-modal-qty-input" value="10,000 units" style="width:120px; text-align:center; border:none; padding:6px; font-weight:700; font-size:0.88rem;">
+              <button type="button" id="bis-modal-qty-plus" style="padding:6px 12px; background:#f1f5f9; border:none; cursor:pointer; font-weight:700;">+</button>
+            </div>
+            <div style="display:flex; gap:6px;">
+              <button type="button" class="secondary-btn btn-sm bis-qty-preset" data-qty="1,000 units">1k</button>
+              <button type="button" class="secondary-btn btn-sm bis-qty-preset" data-qty="5,000 units">5k</button>
+              <button type="button" class="secondary-btn btn-sm bis-qty-preset" data-qty="10,000 units">10k</button>
+              <button type="button" class="secondary-btn btn-sm bis-qty-preset" data-qty="50,000 units">50k</button>
+            </div>
           </div>
         </div>
       </div>
@@ -385,9 +419,9 @@
         </div>
       </div>
 
-      <div class="modal-footer-actions" style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid var(--border-line); padding-top:16px;">
+      <div class="modal-footer-actions" style="margin-top:20px; display:flex; gap:10px; justify-content:flex-end; border-top:1px solid var(--border-line); padding-top:16px; flex-wrap:wrap;">
         <button class="secondary-btn" id="bis-modal-save-btn">Save Standard Reference</button>
-        <button class="primary-btn" id="bis-modal-download-btn">Download PDF Copy</button>
+        <button class="primary-btn" id="bis-modal-draft-btn" style="background:linear-gradient(135deg, #2563eb, #1d4ed8);">Draft Official RFQ for this Product</button>
       </div>
     </div>
   </div>

@@ -973,6 +973,28 @@ function initUIComponents() {
 
   // Modal actions handlers
   document.getElementById('bis-modal-save-btn').addEventListener('click', handleSaveStandard);
+
+  // Quantity Selector controls for bis-detail-modal
+  const qtyInput = document.getElementById('bis-modal-qty-input');
+  document.getElementById('bis-modal-qty-minus')?.addEventListener('click', () => {
+    if (!qtyInput) return;
+    let val = parseInt(qtyInput.value.replace(/[^0-9]/g, '')) || 10000;
+    val = Math.max(1000, val - 1000);
+    qtyInput.value = `${val.toLocaleString()} units`;
+  });
+  document.getElementById('bis-modal-qty-plus')?.addEventListener('click', () => {
+    if (!qtyInput) return;
+    let val = parseInt(qtyInput.value.replace(/[^0-9]/g, '')) || 10000;
+    val += 1000;
+    qtyInput.value = `${val.toLocaleString()} units`;
+  });
+  document.querySelectorAll('.bis-qty-preset').forEach(btn => {
+    btn.addEventListener('click', () => {
+      if (qtyInput && btn.dataset.qty) {
+        qtyInput.value = btn.dataset.qty;
+      }
+    });
+  });
   document.getElementById('bis-modal-download-btn').addEventListener('click', () => {
     showToast('Mock standard PDF download started.', 'success');
   });
@@ -1897,25 +1919,84 @@ function populateAllSearchResults(results) {
   if (!container) return;
   container.innerHTML = '';
   results.forEach((r, i) => {
-    const score = r.match_metadata?.confidence_score || 0;
+    const score = r.match_metadata?.confidence_score || 85.0;
     const row = document.createElement('div');
     row.className = 'nlu-standard-row';
-    row.style.cssText = i > 0 ? 'opacity:0.85; margin-top:8px;' : '';
+    row.style.cssText = 'margin-top:8px; cursor:pointer; transition:all 0.2s ease; display:flex; justify-content:space-between; align-items:center; border:1px solid var(--border-line); border-radius:var(--radius-sm); padding:10px 14px; background:#fff;';
     row.innerHTML = `
-      <div class="nlu-standard-left">
-        <span class="bis-card-code">${r.is_code}</span>
-        <div>
-          <div class="bis-card-title">${r.title}</div>
-          <div class="bis-card-sub" style="display:flex; align-items:center; gap:8px; margin-top:4px;">
-            <span class="meta-tag">${r.category}</span>
-            <span class="badge ${score >= 80 ? 'badge-success' : 'badge-info'} btn-sm" style="padding:0.1rem 0.5rem;">${score.toFixed(1)}% match</span>
-            <span class="badge badge-success btn-sm" style="padding:0.1rem 0.5rem;">${r.match_metadata?.status || 'Active'}</span>
+      <div class="nlu-standard-left" style="flex:1;">
+        <div style="display:flex; align-items:center; gap:8px;">
+          <span class="bis-card-code">${r.is_code}</span>
+          <span class="badge ${score >= 80 ? 'badge-success' : 'badge-info'} btn-sm" style="padding:0.1rem 0.5rem;">${score.toFixed(1)}% match</span>
+          <span class="badge badge-success btn-sm" style="padding:0.1rem 0.5rem;">${r.match_metadata?.status || 'Active'}</span>
+        </div>
+        <div style="margin-top:4px;">
+          <div class="bis-card-title" style="font-weight:700; font-size:0.92rem; color:var(--text-main);">${r.title}</div>
+          <div class="bis-card-sub" style="display:flex; align-items:center; gap:8px; margin-top:2px;">
+            <span class="meta-tag" style="font-size:0.75rem;">${r.category}</span>
+            <span style="font-size:0.75rem; color:var(--text-muted);">${buildSpecsDescription(r.specifications).substring(0, 60)}...</span>
           </div>
         </div>
       </div>
+      <div style="display:flex; gap:8px; align-items:center; margin-left:12px;">
+        <button class="secondary-btn btn-sm nlu-recommend-view-btn" style="white-space:nowrap;">View Details</button>
+        <button class="primary-btn btn-sm nlu-recommend-draft-btn" style="white-space:nowrap; background:linear-gradient(135deg, #2563eb, #1d4ed8);">Draft RFQ</button>
+      </div>
     `;
+
+    // Row click opens the detailed pop-up container card
+    row.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleModal('nlu-modal', false);
+      showBISModalFromApiResult(r);
+    });
+
+    // "Draft RFQ" button directly drafts this specific recommendation
+    row.querySelector('.nlu-recommend-draft-btn').addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleModal('nlu-modal', false);
+      draftSpecificRecommendation(r);
+    });
+
     container.appendChild(row);
   });
+}
+
+function draftSpecificRecommendation(r, customQty) {
+  const confidenceScore = r.match_metadata?.confidence_score || r.bisSuitabilityScore || 85.0;
+  const qty = customQty || (document.getElementById('bis-modal-qty-input')?.value) || '10,000 units';
+
+  const newRfq = {
+    id: `RFQ-2026-00${(currentUser.rfqs ? currentUser.rfqs.length : 0) + 5}`,
+    product: r.title || 'Selected BIS Compliant Product',
+    qty: qty,
+    date: new Date().toISOString().split('T')[0],
+    status: 'Active',
+    bids: 0,
+    standard: r.is_code || r.code || 'IS 12345',
+    buyer: currentUser.email || 'buyer@aspen.gov',
+    org: currentUser.org || 'Verified Buyer',
+    bisSuitabilityScore: confidenceScore,
+    bisSuitabilityStatus: confidenceScore >= 80 ? 'Fully BIS Compliant' : 'Partially Compliant',
+    bisSpecs: buildSpecsDescription(r.specifications) || 'Standard technical tolerances and lab testing rules apply.',
+    bisSuitabilityDetails: `${confidenceScore.toFixed(1)}% suitability match calculated by AI engine against Bureau of Indian Standards testing guidelines.`
+  };
+
+  if (!currentUser.rfqs) currentUser.rfqs = [];
+  currentUser.rfqs.unshift(newRfq);
+
+  if (MOCK_USERS.buyer) {
+    if (!MOCK_USERS.buyer.rfqs) MOCK_USERS.buyer.rfqs = [];
+    if (!MOCK_USERS.buyer.rfqs.some(req => req.id === newRfq.id)) {
+      MOCK_USERS.buyer.rfqs.unshift(newRfq);
+    }
+  }
+
+  addNotification('info', `Tender Drafted: RFQ for ${newRfq.product} (${newRfq.id}) published against ${newRfq.standard}.`);
+  addAuditLog(currentUser.email || 'buyer@aspen.gov', `Published official tender RFQ ${newRfq.id} requesting compliance against ${newRfq.standard}.`);
+
+  showToast(`Drafted official RFQ ${newRfq.id} for "${newRfq.product}" (${qty})!`, 'success');
+  navigateTo('active');
 }
 
 function simulateNLUParser(query) {
@@ -3433,35 +3514,147 @@ function initRegisterModal() {
 
 function showBISModal(standardCode) {
   const std = MOCK_BIS_STANDARDS.find(s => s.code === standardCode);
-  if (!std) return;
+  if (std) {
+    showBISModalFromApiResult({
+      is_code: std.code,
+      title: std.title,
+      category: std.industry,
+      description: std.description,
+      match_metadata: { confidence_score: 100, status: 'Active' },
+      specifications: { relevance: std.relevance, committee: std.committee, published: std.date },
+      _manufacturers: std.manufacturers
+    });
+  } else {
+    showBISModalFromApiResult({
+      is_code: standardCode,
+      title: `Indian Standard Code: ${standardCode}`,
+      category: 'BIS Compliance Registry',
+      match_metadata: { confidence_score: 90.0, status: 'Active' }
+    });
+  }
+}
 
-  document.getElementById('bis-modal-code').textContent = std.code;
-  document.getElementById('bis-modal-title').textContent = std.title;
-  document.getElementById('bis-modal-industry').textContent = std.industry;
-  document.getElementById('bis-modal-description').textContent = std.description;
-  document.getElementById('bis-modal-relevance').textContent = std.relevance;
-  document.getElementById('bis-modal-date').textContent = std.date;
-  document.getElementById('bis-modal-committee').textContent = std.committee;
+function showBISModalFromApiResult(r) {
+  if (!r) return;
+
+  const code = r.is_code || r.code || r.standard || 'IS 12345';
+  const title = r.title || r.name || 'BIS Standard Product Specification';
+  const category = r.category || r.industry || 'General';
+  const desc = r.description || buildSpecsDescription(r.specifications) || 'Bureau of Indian Standards compliance guidelines.';
+  const score = r.match_metadata?.confidence_score || r.bisSuitabilityScore || 85.0;
+  const status = r.match_metadata?.status || r.status || 'Active';
+
+  document.getElementById('bis-modal-code').textContent = code;
+  document.getElementById('bis-modal-title').textContent = title;
+  document.getElementById('bis-modal-industry').textContent = category;
+  document.getElementById('bis-modal-description').textContent = desc;
+
+  const badgeElem = document.getElementById('bis-modal-match-badge');
+  if (badgeElem) {
+    badgeElem.textContent = `${score.toFixed(1)}% AI Verified Match`;
+    badgeElem.className = score >= 80 ? 'badge badge-success' : 'badge badge-info';
+  }
+
+  document.getElementById('bis-modal-relevance').textContent = `${score.toFixed(1)}% Suitability`;
+  document.getElementById('bis-modal-date').textContent = status;
+  document.getElementById('bis-modal-committee').textContent = `AI NLU Match`;
+
+  // Render ordered technical specifications container grid
+  const specsGrid = document.getElementById('bis-modal-specs-container');
+  if (specsGrid) {
+    specsGrid.innerHTML = '';
+    const specs = r.specifications || {};
+    const entries = Object.entries(specs);
+    if (entries.length === 0) {
+      specsGrid.innerHTML = `<div style="grid-column:1/-1; color:var(--text-muted); font-size:0.8rem;">Standard dimensions, material tolerances, and safety parameters aligned with IS registry.</div>`;
+    } else {
+      entries.forEach(([k, v]) => {
+        const item = document.createElement('div');
+        item.style.cssText = 'background:#fff; border:1px solid var(--border-line); padding:8px 10px; border-radius:4px;';
+        item.innerHTML = `
+          <strong style="color:var(--text-muted); display:block; font-size:0.7rem; text-transform:uppercase;">${k.replace(/_/g, ' ')}</strong>
+          <span style="font-weight:600; color:var(--text-main); font-size:0.82rem;">${Array.isArray(v) ? v.join(', ') : v}</span>
+        `;
+        specsGrid.appendChild(item);
+      });
+    }
+  }
 
   // Render certified vendors list inside modal
   const vendorGrid = document.getElementById('bis-modal-manufacturers-list');
-  vendorGrid.innerHTML = '';
+  if (vendorGrid) {
+    vendorGrid.innerHTML = '';
+    const vendors = r._manufacturers || r.manufacturers || [
+      { name: 'Supreme Industrial Supplies Ltd.', license: 'CM/L-829183', location: 'Ahmedabad, Gujarat' },
+      { name: 'Aegis Tech Materials Corp', license: 'CM/L-736254', location: 'Coimbatore, Tamil Nadu' }
+    ];
+    vendors.forEach(m => {
+      const card = document.createElement('div');
+      card.className = 'bis-vendor-card';
+      card.innerHTML = `
+        <div class="bis-vendor-logo">${m.name.charAt(0)}</div>
+        <div class="bis-vendor-info">
+          <div class="bis-vendor-name">${m.name}</div>
+          <div class="bis-vendor-lic">License No: ${m.license} • ${m.location}</div>
+        </div>
+        <span class="badge badge-success">✓ Verified Active</span>
+      `;
+      vendorGrid.appendChild(card);
+    });
+  }
 
-  std.manufacturers.forEach(m => {
-    const card = document.createElement('div');
-    card.className = 'bis-vendor-card';
-    card.innerHTML = `
-      <div class="bis-vendor-logo">${m.name.charAt(0)}</div>
-      <div class="bis-vendor-info">
-        <div class="bis-vendor-name">${m.name}</div>
-        <div class="bis-vendor-lic">License No: ${m.license} • ${m.location}</div>
-      </div>
-      <span class="badge badge-success">✓ Verified Active</span>
-    `;
-    vendorGrid.appendChild(card);
-  });
+  // Configure Quantity Selector Block for Role
+  const qtyInput = document.getElementById('bis-modal-qty-input');
+  const qtyLabel = document.getElementById('bis-modal-qty-label');
+  const qtyRoleInd = document.getElementById('bis-modal-qty-role-indicator');
+  const draftBtn = document.getElementById('bis-modal-draft-btn');
 
-  // Default to overview tab
+  if (currentUser.role === 'buyer') {
+    if (qtyLabel) qtyLabel.textContent = 'Required Procurement Quantity:';
+    if (qtyRoleInd) qtyRoleInd.textContent = 'Buyer Procurement Selection';
+    if (qtyInput) qtyInput.value = r.qty || '10,000 units';
+
+    if (draftBtn) {
+      draftBtn.style.display = 'inline-block';
+      draftBtn.textContent = 'Draft Official RFQ for this Product';
+      draftBtn.onclick = () => {
+        const selectedQty = qtyInput ? qtyInput.value : '10,000 units';
+        draftSpecificRecommendation(r, selectedQty);
+        toggleModal('bis-detail-modal', false);
+      };
+    }
+  } else if (currentUser.role === 'seller') {
+    if (qtyLabel) qtyLabel.textContent = 'Allowed Supply Capacity (Limit):';
+    if (qtyRoleInd) qtyRoleInd.textContent = 'Seller Capacity Control';
+    if (qtyInput) qtyInput.value = currentUser.capacity || '25,000 units / month';
+
+    if (draftBtn) {
+      draftBtn.style.display = 'inline-block';
+      draftBtn.textContent = 'Update Allowed Supply Capacity';
+      draftBtn.onclick = () => {
+        const newCap = qtyInput ? qtyInput.value : '25,000 units / month';
+        currentUser.capacity = newCap;
+        showToast(`Allowed supply capacity limit updated to ${newCap}!`, 'success');
+        addAuditLog(currentUser.email, `Updated certified supply capacity limit to ${newCap}.`);
+        toggleModal('bis-detail-modal', false);
+      };
+    }
+  } else {
+    if (qtyLabel) qtyLabel.textContent = 'Standard Quantity Reference:';
+    if (qtyRoleInd) qtyRoleInd.textContent = 'Public Access View';
+    if (qtyInput) qtyInput.value = '10,000 units';
+
+    if (draftBtn) {
+      draftBtn.style.display = 'inline-block';
+      draftBtn.textContent = 'Sign In to Draft RFQ';
+      draftBtn.onclick = () => {
+        toggleModal('bis-detail-modal', false);
+        toggleModal('auth-modal', true);
+      };
+    }
+  }
+
+  // Reset to Overview tab
   document.querySelectorAll('.bis-tab-btn').forEach(btn => {
     if (btn.dataset.tab === 'overview') btn.classList.add('active');
     else btn.classList.remove('active');
@@ -3469,17 +3662,6 @@ function showBISModal(standardCode) {
   document.getElementById('bis-tab-overview').style.display = 'block';
   document.getElementById('bis-tab-compliance').style.display = 'none';
   document.getElementById('bis-tab-manufacturers').style.display = 'none';
-
-  // Toggle Save button text based on whether it is already saved
-  const saveBtn = document.getElementById('bis-modal-save-btn');
-  if (currentUser.role === 'buyer') {
-    const isSaved = currentUser.savedStandards && currentUser.savedStandards.some(s => s.includes(std.code));
-    saveBtn.style.display = 'block';
-    saveBtn.textContent = isSaved ? 'Saved Standard' : 'Save Standard';
-    saveBtn.disabled = isSaved;
-  } else {
-    saveBtn.style.display = 'none';
-  }
 
   toggleModal('bis-detail-modal', true);
 }
