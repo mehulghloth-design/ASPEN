@@ -1715,7 +1715,10 @@ function renderPublicHomeWidgets(container) {
   const bisList = container.querySelector('#home-bis-list');
 
   apiBISSearch('electrical wiring construction safety').then(data => {
-    const results = (data.results || []).slice(0, 3);
+    let results = data.results || [];
+    // Sort by confidence_score descending (highest first)
+    results.sort((a, b) => (b.match_metadata?.confidence_score || 0) - (a.match_metadata?.confidence_score || 0));
+    results = results.slice(0, 3);
     bisList.innerHTML = '';
     if (results.length === 0) {
       bisList.innerHTML = `<div class="card bis-highlight-card"><div class="bis-card-title">No data available.</div></div>`;
@@ -1821,7 +1824,10 @@ async function handleSearch(query) {
     const data = await apiBISSearch(query);
 
     // Normalize API response into parsedSearchResult shape
-    const results = data.results || [];
+    let results = data.results || [];
+    // Sort results by confidence_score descending so highest match appears first
+    results.sort((a, b) => (b.match_metadata?.confidence_score || 0) - (a.match_metadata?.confidence_score || 0));
+
     const topResult = results[0] || null;
 
     // Extract quantity from query (kept from before)
@@ -2971,6 +2977,8 @@ function renderBISPage(container) {
     gridContainer.innerHTML = `<div class="card" style="text-align:center; padding:2rem; color:var(--text-muted);">Searching AI BIS database for "${query}"...</div>`;
     apiBISSearch(query || 'standard').then(data => {
       let results = data.results || [];
+      // Sort by confidence_score descending (highest confidence first)
+      results.sort((a, b) => (b.match_metadata?.confidence_score || 0) - (a.match_metadata?.confidence_score || 0));
       const domain = domainSelect.value;
       if (domain && domain !== 'All') results = results.filter(r => r.category === domain);
       renderApiResults(results);
