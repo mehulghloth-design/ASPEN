@@ -253,6 +253,7 @@ let systemAuditLogs = [...MOCK_AUDIT_LOGS];
 let currentSearchQuery = '';
 let parsedSearchResult = null;
 let currentLang = localStorage.getItem('aspen_lang') || 'en';
+let SYSTEM_ADMIN_OVERRIDES = JSON.parse(localStorage.getItem('aspen_admin_overrides') || '{}');
 
 // ==========================================================================
 // MULTI-LANGUAGE TRANSLATION DICTIONARY (English, Hindi, Telugu)
@@ -2242,7 +2243,18 @@ function getAllSystemRFQs() {
     }));
   }
 
-  return Array.from(map.values());
+  // Merge any global Administrator overrides
+  return Array.from(map.values()).map(r => {
+    if (SYSTEM_ADMIN_OVERRIDES[r.id]) {
+      return {
+        ...r,
+        adminOverride: true,
+        biddingAllowed: true,
+        status: 'Active (Admin Override Granted)'
+      };
+    }
+    return r;
+  });
 }
 
 function createRFQFromParsed() {
@@ -2825,6 +2837,9 @@ window.adminAuditRFQGlobal = (rfqId) => {
 };
 
 window.adminOverrideBISSatisfactionGlobal = (rfqId) => {
+  SYSTEM_ADMIN_OVERRIDES[rfqId] = true;
+  localStorage.setItem('aspen_admin_overrides', JSON.stringify(SYSTEM_ADMIN_OVERRIDES));
+
   const allRfqs = getAllSystemRFQs();
   const rfq = allRfqs.find(r => r.id === rfqId);
   if (rfq) {
