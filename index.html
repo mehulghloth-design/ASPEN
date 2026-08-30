@@ -442,6 +442,53 @@
     </div>
   </div>
 
+  <!-- BIS Suitability Analysis Report Modal -->
+  <div class="modal-overlay" id="bis-suitability-modal">
+    <div class="modal-card" style="max-width:640px;">
+      <button class="modal-close" id="bis-suitability-close" style="background:none; border:none;">&times;</button>
+      <div class="modal-header-section" style="margin-bottom:16px;">
+        <span class="badge badge-success" id="bis-suitability-score-badge" style="font-size:0.85rem; padding:4px 10px;">85.0% BIS Suitability</span>
+        <h2 id="bis-suitability-modal-title" style="font-size:1.35rem; margin-top:8px; margin-bottom:4px;">Bureau of Indian Standards Suitability Report</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted);" id="bis-suitability-modal-subtitle">AI-evaluated alignment against Bureau of Indian Standards (BIS) specifications.</p>
+      </div>
+
+      <div class="card" style="background:var(--bg-primary); border-radius:var(--radius-sm); padding:16px; margin-bottom:16px;">
+        <div style="font-size:0.75rem; text-transform:uppercase; color:var(--text-muted); font-weight:700; margin-bottom:4px;">Bureau of Indian Standards Code & Requirement</div>
+        <div style="font-weight:700; font-size:1.15rem; color:var(--primary);" id="bis-suitability-code">IS 12345</div>
+        <div style="font-size:0.88rem; color:var(--text-main); margin-top:4px; font-weight:600;" id="bis-suitability-product">Drafted Requirement Product Name</div>
+      </div>
+
+      <div style="display:flex; flex-direction:column; gap:12px; font-size:0.88rem;">
+        <div class="card" style="padding:14px; border-left:4px solid #16a34a;">
+          <strong style="color:var(--text-main); display:block; margin-bottom:4px;">BIS Suitability & AI Evaluation</strong>
+          <p style="font-size:0.83rem; color:var(--text-sub); margin:0;" id="bis-suitability-eval">
+            Product requirement matches Bureau of Indian Standards testing guidelines.
+          </p>
+        </div>
+
+        <div class="card" style="padding:14px;">
+          <strong style="color:var(--text-main); display:block; margin-bottom:6px;">Technical Specification Alignment</strong>
+          <div style="font-size:0.83rem; color:var(--text-sub); line-height:1.6;" id="bis-suitability-specs">
+            Dimensions, materials, and safety tolerances verified against active standard registry.
+          </div>
+        </div>
+
+        <div class="card" style="padding:14px; background:#eff6ff; border-color:#bfdbfe;">
+          <strong style="color:#1e40af; display:block; margin-bottom:4px;">Directives & Compliance Rules</strong>
+          <ul style="font-size:0.8rem; color:#1e3a8a; margin:0; padding-left:18px; line-height:1.6;">
+            <li>ISI Mark mandatory on all primary packaging</li>
+            <li>Semi-annual test report verification from NABL-accredited laboratory required</li>
+            <li>Bureau of Indian Standards CM/L License verification prior to final procurement</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="modal-footer-actions" style="margin-top:20px; display:flex; justify-content:flex-end;">
+        <button class="primary-btn" id="bis-suitability-modal-ok">Close Report</button>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

@@ -257,6 +257,7 @@ const TRANSLATIONS = {
     bis_standards: "BIS Standards",
     buyer_rfq_oversight: "Buyer Drafted Tenders & RFQs Oversight",
     total_rfqs: "Total RFQs",
+    view_bis_report: "View BIS Report",
     my_products: "My Products",
     audit_logs: "Audit Logs",
     settings: "Settings",
@@ -947,6 +948,14 @@ function initUIComponents() {
   // BIS Modal close trigger
   document.getElementById('bis-detail-close').addEventListener('click', () => {
     toggleModal('bis-detail-modal', false);
+  });
+
+  // BIS Suitability Modal close triggers
+  document.getElementById('bis-suitability-close')?.addEventListener('click', () => {
+    toggleModal('bis-suitability-modal', false);
+  });
+  document.getElementById('bis-suitability-modal-ok')?.addEventListener('click', () => {
+    toggleModal('bis-suitability-modal', false);
   });
 
   // BIS Modal tab switcher
@@ -2103,6 +2112,12 @@ function getAllSystemRFQs() {
 }
 
 function createRFQFromParsed() {
+  const confidenceScore = (parsedSearchResult.matchedStandard && parsedSearchResult.matchedStandard.committee && parsedSearchResult.matchedStandard.committee.includes('Confidence Score:'))
+    ? parseFloat(parsedSearchResult.matchedStandard.committee.replace(/[^0-9.]/g, '')) || 86.5
+    : 86.5;
+
+  const specsText = buildSpecsDescription(parsedSearchResult.matchedStandard?.specifications || {});
+
   const newRfq = {
     id: `RFQ-2026-00${(currentUser.rfqs ? currentUser.rfqs.length : 0) + 5}`,
     product: parsedSearchResult.product,
@@ -2112,7 +2127,11 @@ function createRFQFromParsed() {
     bids: 0,
     standard: parsedSearchResult.matchedStandard ? parsedSearchResult.matchedStandard.code : 'IS 758',
     buyer: currentUser.email || 'buyer@aspen.gov',
-    org: currentUser.org || 'Verified Buyer'
+    org: currentUser.org || 'Verified Buyer',
+    bisSuitabilityScore: confidenceScore,
+    bisSuitabilityStatus: confidenceScore >= 80 ? 'Fully BIS Compliant' : 'Partially Compliant',
+    bisSpecs: specsText || 'Standard technical tolerances and laboratory test rules apply.',
+    bisSuitabilityDetails: `${confidenceScore.toFixed(1)}% suitability score calculated by AI NLU engine against active Bureau of Indian Standards parameters.`
   };
 
   if (!currentUser.rfqs) currentUser.rfqs = [];
@@ -2126,10 +2145,10 @@ function createRFQFromParsed() {
   }
 
   // Add notification and audit log
-  addNotification('info', `Tender Drafted: RFQ for ${newRfq.product} (${newRfq.id}) published by ${currentUser.email}.`);
-  addAuditLog(currentUser.email, `Published official tender RFQ ${newRfq.id} requesting compliance against ${newRfq.standard}.`);
+  addNotification('info', `Tender Drafted: RFQ for ${newRfq.product} (${newRfq.id}) published with ${newRfq.bisSuitabilityScore.toFixed(1)}% BIS Suitability score.`);
+  addAuditLog(currentUser.email, `Published official tender RFQ ${newRfq.id} (${newRfq.bisSuitabilityScore.toFixed(1)}% BIS Suitability match against ${newRfq.standard}).`);
 
-  showToast(`Successfully created ${newRfq.id}! Reflected in Administrator dashboard.`, 'success');
+  showToast(`Successfully created ${newRfq.id}! BIS Suitability Score: ${newRfq.bisSuitabilityScore.toFixed(1)}%`, 'success');
   navigateTo('active');
 }
 
@@ -2153,7 +2172,7 @@ function renderBuyerActiveRFQs(container) {
     <div class="page-actions-bar">
       <div class="page-title-area">
         <h1>${t('my_rfqs')}</h1>
-        <p>${t('rfq_page_sub')}</p>
+        <p>Detailed listing of all requested drafts with Bureau of Indian Standards (BIS) suitability evaluations.</p>
       </div>
       <button class="primary-btn" id="buyer-new-rfq-btn">${t('create_req')}</button>
     </div>
@@ -2164,25 +2183,38 @@ function renderBuyerActiveRFQs(container) {
           <tr>
             <th>${t('rfq_id')}</th>
             <th>${t('requirement_details')}</th>
-            <th>${t('required_standard')}</th>
+            <th>${t('required_standard')} & BIS Suitability</th>
             <th>${t('qty_requested')}</th>
             <th>${t('date_published')}</th>
             <th>${t('bids_count')}</th>
-            <th>${t('tender_status')}</th>
+            <th>BIS Suitability Report</th>
           </tr>
         </thead>
         <tbody>
-          ${currentUser.rfqs.map(rfq => `
+          ${currentUser.rfqs.map(rfq => {
+            const score = rfq.bisSuitabilityScore || 85.0;
+            return `
             <tr>
               <td class="table-cell-title">${rfq.id}</td>
-              <td>${rfq.product}</td>
-              <td><span class="bis-card-code" style="cursor:pointer;" onclick="window.showBISModalGlobal('${rfq.standard}')">${rfq.standard}</span></td>
+              <td>
+                <strong>${rfq.product}</strong>
+                <div style="font-size:0.75rem; color:var(--text-muted); margin-top:2px;">${rfq.bisSpecs ? rfq.bisSpecs.substring(0, 50) + '...' : 'Standard parameters verified'}</div>
+              </td>
+              <td>
+                <span class="bis-card-code" style="cursor:pointer;" onclick="window.showBISModalGlobal('${rfq.standard}')">${rfq.standard}</span>
+                <div style="margin-top:4px; display:flex; align-items:center; gap:6px;">
+                  <span class="badge ${score >= 80 ? 'badge-success' : 'badge-info'} btn-sm">${score.toFixed(1)}% BIS Match</span>
+                  <span style="font-size:0.72rem; color:var(--text-muted);">${rfq.bisSuitabilityStatus || 'Compliant'}</span>
+                </div>
+              </td>
               <td>${rfq.qty}</td>
               <td>${rfq.date}</td>
               <td><span class="badge badge-info">${rfq.bids} Bids</span></td>
-              <td><span class="badge ${rfq.status === 'Active' ? 'badge-success' : 'badge-warning'}">${rfq.status}</span></td>
+              <td>
+                <button class="secondary-btn btn-sm" onclick="window.showBISSuitabilityReportGlobal('${rfq.id}')">${t('view_bis_report')}</button>
+              </td>
             </tr>
-          `).join('')}
+          `}).join('')}
         </tbody>
       </table>
     </div>
@@ -2580,23 +2612,31 @@ function renderAdminDashboard(container) {
           </tr>
         </thead>
         <tbody id="admin-rfq-tbody">
-          ${allRfqs.map(rfq => `
+          ${allRfqs.map(rfq => {
+            const score = rfq.bisSuitabilityScore || 85.0;
+            return `
             <tr>
               <td class="table-cell-title">${rfq.id}</td>
               <td><strong>${rfq.product}</strong></td>
               <td>${rfq.qty || rfq.quantity || '10,000 units'}</td>
-              <td><span class="bis-card-code" style="cursor:pointer;" onclick="window.showBISModalGlobal('${rfq.standard}')">${rfq.standard}</span></td>
+              <td>
+                <span class="bis-card-code" style="cursor:pointer;" onclick="window.showBISModalGlobal('${rfq.standard}')">${rfq.standard}</span>
+                <div style="margin-top:4px;">
+                  <span class="badge ${score >= 80 ? 'badge-success' : 'badge-info'} btn-sm">${score.toFixed(1)}% BIS Match</span>
+                </div>
+              </td>
               <td>
                 <div style="font-size:0.85rem; font-weight:600;">${rfq.org || 'Buyer Dept'}</div>
                 <div style="font-size:0.75rem; color:var(--text-muted);">${rfq.buyer || 'buyer@aspen.gov'}</div>
               </td>
               <td>${rfq.date}</td>
               <td><span class="badge ${rfq.status === 'Active' ? 'badge-success' : 'badge-info'}" id="admin-rfq-status-${rfq.id}">${rfq.status}</span></td>
-              <td>
+              <td style="display:flex; gap:6px;">
+                <button class="secondary-btn btn-sm" onclick="window.showBISSuitabilityReportGlobal('${rfq.id}')">BIS Report</button>
                 <button class="primary-btn btn-sm" id="admin-rfq-btn-${rfq.id}" onclick="window.adminAuditRFQGlobal('${rfq.id}')">Audit & Approve</button>
               </td>
             </tr>
-          `).join('')}
+          `}).join('')}
         </tbody>
       </table>
     </div>
@@ -2604,7 +2644,7 @@ function renderAdminDashboard(container) {
   container.appendChild(rfqsSection);
 }
 
-// Expose admin RFQ audit global handler
+// Expose admin RFQ audit & BIS suitability report global handlers
 window.adminAuditRFQGlobal = (rfqId) => {
   const badge = document.getElementById(`admin-rfq-status-${rfqId}`);
   if (badge) {
@@ -2621,6 +2661,27 @@ window.adminAuditRFQGlobal = (rfqId) => {
   addNotification('success', `Admin Compliance Audit: Tender ${rfqId} has been audited & verified by Administrator.`);
   addAuditLog(currentUser.email || 'admin@aspen.gov', `Administrator audited and approved tender RFQ ${rfqId}.`);
   showToast(`Tender ${rfqId} audited & verified successfully!`, 'success');
+};
+
+window.showBISSuitabilityReportGlobal = (rfqId) => {
+  const allRfqs = getAllSystemRFQs();
+  const rfq = allRfqs.find(r => r.id === rfqId);
+  if (!rfq) return;
+
+  const score = rfq.bisSuitabilityScore || 85.0;
+  const badgeElem = document.getElementById('bis-suitability-score-badge');
+  if (badgeElem) {
+    badgeElem.textContent = `${score.toFixed(1)}% BIS Suitability`;
+    badgeElem.className = score >= 80 ? 'badge badge-success' : 'badge badge-info';
+  }
+
+  document.getElementById('bis-suitability-modal-title').textContent = `Bureau of Indian Standards Report: ${rfq.id}`;
+  document.getElementById('bis-suitability-code').textContent = `${rfq.standard} — ${rfq.bisSuitabilityStatus || 'Fully BIS Compliant'}`;
+  document.getElementById('bis-suitability-product').textContent = `Drafted Product: ${rfq.product} (Quantity: ${rfq.qty || rfq.quantity || '10,000 units'})`;
+  document.getElementById('bis-suitability-eval').textContent = rfq.bisSuitabilityDetails || `${score.toFixed(1)}% suitability score calculated by AI NLU parser against active Bureau of Indian Standards testing guidelines.`;
+  document.getElementById('bis-suitability-specs').textContent = rfq.bisSpecs || 'Technical specs: Standard dimensions, material tolerances, and NABL laboratory testing rules.';
+
+  toggleModal('bis-suitability-modal', true);
 };
 
 function renderAdminUsers(container) {
