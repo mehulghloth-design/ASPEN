@@ -531,6 +531,40 @@
     </div>
   </div>
 
+  <!-- Buyer Submitted Bids Modal -->
+  <div class="modal-overlay" id="buyer-bids-modal">
+    <div class="modal-card" style="max-width: 780px; width: 92%;">
+      <button class="modal-close" id="buyer-bids-close" style="background:none; border:none;">&times;</button>
+      <div class="modal-header-section" style="margin-bottom:16px;">
+        <span class="badge badge-success" id="buyer-bids-count-badge" style="font-size:0.85rem; padding:4px 10px;">Bids Received</span>
+        <h2 id="buyer-bids-modal-title" style="font-size:1.35rem; margin-top:8px; margin-bottom:4px;">Submitted Seller Bids & Quotes</h2>
+        <p style="font-size:0.85rem; color:var(--text-muted);" id="buyer-bids-modal-subtitle">Review compliant bids submitted by verified suppliers against your active RFQ.</p>
+      </div>
+
+      <div class="product-table-wrapper card" style="padding:0; overflow:hidden; margin-bottom:16px;">
+        <table class="aspen-table">
+          <thead>
+            <tr>
+              <th>Bid ID</th>
+              <th>Seller / Supplier Org</th>
+              <th>BIS Compliance</th>
+              <th>Quoted Price</th>
+              <th>Date Submitted</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="buyer-bids-tbody">
+            <!-- Rendered dynamically by app.js -->
+          </tbody>
+        </table>
+      </div>
+
+      <div class="modal-footer-actions" style="margin-top:20px; display:flex; justify-content:flex-end;">
+        <button class="secondary-btn" id="buyer-bids-modal-close-btn">Close Bids Window</button>
+      </div>
+    </div>
+  </div>
+
   <script src="app.js"></script>
 </body>
 </html>

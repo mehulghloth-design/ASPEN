@@ -1165,6 +1165,14 @@ function initUIComponents() {
     toggleModal('bis-suitability-modal', false);
   });
 
+  // Buyer Submitted Bids Modal close triggers
+  document.getElementById('buyer-bids-close')?.addEventListener('click', () => {
+    toggleModal('buyer-bids-modal', false);
+  });
+  document.getElementById('buyer-bids-modal-close-btn')?.addEventListener('click', () => {
+    toggleModal('buyer-bids-modal', false);
+  });
+
   // BIS Modal tab switcher
   const bisTabs = document.querySelectorAll('.bis-tab-btn');
   bisTabs.forEach(tab => {
@@ -2197,7 +2205,20 @@ function populateAllSearchResults(results) {
     });
 
     container.appendChild(row);
-  });
+const SYSTEM_RFQ_BIDS = JSON.parse(localStorage.getItem('aspen_system_rfq_bids') || '{}');
+
+// Pre-populate mock bids for sample RFQs if not already set
+if (!SYSTEM_RFQ_BIDS['RFQ-2026-004']) {
+  SYSTEM_RFQ_BIDS['RFQ-2026-004'] = [
+    { id: 'BID-901', sellerEmail: 'sales@bharatmedical.in', sellerOrg: 'Bharat Medical Supplies Ltd.', quotePrice: '₹145 / m', date: '2026-08-29', status: '✓ BIS Certified Compliant' },
+    { id: 'BID-902', sellerEmail: 'info@nationalsurgicals.com', sellerOrg: 'National Surgicals India', quotePrice: '₹142 / m', date: '2026-08-29', status: '✓ BIS Certified Compliant' },
+    { id: 'BID-903', sellerEmail: 'bids@apexmedtech.com', sellerOrg: 'Apex MedTech Solutions', quotePrice: '₹148 / m', date: '2026-08-30', status: '✓ BIS Certified Compliant' }
+  ];
+}
+if (!SYSTEM_RFQ_BIDS['RFQ-2026-002']) {
+  SYSTEM_RFQ_BIDS['RFQ-2026-002'] = [
+    { id: 'BID-801', sellerEmail: 'sales@borosil.com', sellerOrg: 'Borosil Scientific Ltd.', quotePrice: '₹85 / unit', date: '2026-08-16', status: '✓ BIS Certified Compliant' }
+  ];
 }
 
 function draftSpecificRecommendation(r, customQty) {
@@ -2437,17 +2458,23 @@ function getAllSystemRFQs() {
     }));
   }
 
-  // Merge any global Administrator overrides
+  // Merge any global Administrator overrides and submitted bids
   return Array.from(map.values()).map(r => {
-    if (SYSTEM_ADMIN_OVERRIDES[r.id]) {
-      return {
-        ...r,
-        adminOverride: true,
-        biddingAllowed: true,
-        status: 'Active (Admin Override Granted)'
-      };
+    let updated = { ...r };
+    if (SYSTEM_RFQ_BIDS[r.id]) {
+      updated.bids = SYSTEM_RFQ_BIDS[r.id].length;
+      if (updated.bids > 0 && updated.status !== 'Bidding Closed') {
+        updated.status = `Active (${updated.bids} Bid${updated.bids > 1 ? 's' : ''} Received)`;
+      }
     }
-    return r;
+    if (SYSTEM_ADMIN_OVERRIDES[r.id]) {
+      updated.adminOverride = true;
+      updated.biddingAllowed = true;
+      if (!updated.status || !updated.status.includes('Bid')) {
+        updated.status = 'Active (Admin Override Granted)';
+      }
+    }
+    return updated;
   });
 }
 
@@ -2516,11 +2543,13 @@ function addSavedSearch(query, product) {
 }
 
 function renderBuyerActiveRFQs(container) {
+  const allBuyerRfqs = getAllSystemRFQs();
+
   container.innerHTML = `
     <div class="page-actions-bar">
       <div class="page-title-area">
         <h1>${t('my_rfqs')}</h1>
-        <p>Detailed listing of all requested drafts with Bureau of Indian Standards (BIS) suitability evaluations.</p>
+        <p>Detailed listing of all requested drafts with Bureau of Indian Standards (BIS) suitability evaluations and submitted seller bids.</p>
       </div>
       <button class="primary-btn" id="buyer-new-rfq-btn">${t('create_req')}</button>
     </div>
@@ -2534,13 +2563,14 @@ function renderBuyerActiveRFQs(container) {
             <th>${t('required_standard')} & BIS Suitability</th>
             <th>${t('qty_requested')}</th>
             <th>${t('date_published')}</th>
-            <th>${t('bids_count')}</th>
+            <th>Bids Received</th>
             <th>BIS Suitability Report</th>
           </tr>
         </thead>
         <tbody>
-          ${currentUser.rfqs.map(rfq => {
+          ${allBuyerRfqs.map(rfq => {
             const score = rfq.bisSuitabilityScore || 85.0;
+            const bidsCount = rfq.bids || (SYSTEM_RFQ_BIDS[rfq.id] ? SYSTEM_RFQ_BIDS[rfq.id].length : 0);
             return `
             <tr>
               <td class="table-cell-title">${rfq.id}</td>
@@ -2555,9 +2585,13 @@ function renderBuyerActiveRFQs(container) {
                   <span style="font-size:0.72rem; color:var(--text-muted);">${rfq.bisSuitabilityStatus || 'Compliant'}</span>
                 </div>
               </td>
-              <td>${rfq.qty}</td>
+              <td>${rfq.qty || rfq.quantity || '10,000 units'}</td>
               <td>${rfq.date}</td>
-              <td><span class="badge badge-info">${rfq.bids} Bids</span></td>
+              <td>
+                <button class="primary-btn btn-sm" style="background:${bidsCount > 0 ? '#10b981' : '#6b7280'}; border:none; padding:5px 12px; font-weight:700;" onclick="window.viewRFQBidsGlobal('${rfq.id}')">
+                  ${bidsCount > 0 ? `✓ ${bidsCount} Bid(s) Received` : '0 Bids Received'}
+                </button>
+              </td>
               <td>
                 <button class="secondary-btn btn-sm" onclick="window.showBISSuitabilityReportGlobal('${rfq.id}')">${t('view_bis_report')}</button>
               </td>
@@ -2787,20 +2821,123 @@ function renderSellerOpportunities(container) {
 }
 
 window.submitSellerBidGlobal = (rfqId) => {
-  showToast(`Compliant bid submitted successfully against ${rfqId}.`, 'success');
-  addAuditLog(currentUser.email, `Submitted certified bid against procurement standard requirements for ${rfqId}.`);
-  
-  // Update bid count in mock data
-  Object.values(MOCK_USERS).forEach(u => {
-    if (u.role === 'buyer' && u.rfqs) {
-      const targetRfq = u.rfqs.find(r => r.id === rfqId);
-      if (targetRfq) {
-        targetRfq.bids++;
+  const allRfqs = getAllSystemRFQs();
+  const rfq = allRfqs.find(r => r.id === rfqId);
+
+  const isExemption = rfq && (rfq.adminOverride === true || SYSTEM_ADMIN_OVERRIDES[rfqId] === true);
+
+  const newBid = {
+    id: `BID-${Math.floor(100 + Math.random() * 900)}`,
+    sellerEmail: currentUser.email || 'seller@aspen.gov.in',
+    sellerOrg: currentUser.org || 'Bharat Medical Supplies Ltd.',
+    quotePrice: '₹' + (Math.floor(Math.random() * 50) + 120).toLocaleString() + ' / unit',
+    date: new Date().toISOString().split('T')[0],
+    status: isExemption ? '✓ Admin Exemption Verified' : '✓ BIS Certified Compliant'
+  };
+
+  if (!SYSTEM_RFQ_BIDS[rfqId]) {
+    SYSTEM_RFQ_BIDS[rfqId] = [];
+  }
+
+  // Record bid
+  const existingIndex = SYSTEM_RFQ_BIDS[rfqId].findIndex(b => b.sellerEmail === newBid.sellerEmail);
+  if (existingIndex >= 0) {
+    SYSTEM_RFQ_BIDS[rfqId][existingIndex] = newBid;
+  } else {
+    SYSTEM_RFQ_BIDS[rfqId].unshift(newBid);
+  }
+
+  localStorage.setItem('aspen_system_rfq_bids', JSON.stringify(SYSTEM_RFQ_BIDS));
+  const newBidCount = SYSTEM_RFQ_BIDS[rfqId].length;
+
+  // Sync count to all user RFQs
+  [currentUser, MOCK_USERS.buyer, MOCK_USERS.seller].forEach(u => {
+    if (u && u.rfqs) {
+      const match = u.rfqs.find(r => r.id === rfqId);
+      if (match) {
+        match.bids = newBidCount;
+        match.status = `Active (${newBidCount} Bid${newBidCount > 1 ? 's' : ''} Received)`;
       }
     }
   });
-  
-  navigateTo('active');
+
+  addNotification('info', `New Compliant Bid: ${newBid.sellerOrg} submitted bid ${newBid.id} for tender ${rfqId}. Total Bids: ${newBidCount}.`);
+  addAuditLog(currentUser.email || 'seller@aspen.gov.in', `Submitted certified bid ${newBid.id} for tender ${rfqId}. Price: ${newBid.quotePrice}.`);
+  showToast(`Compliant bid (${newBid.id}) submitted successfully for ${rfqId}! Total bids received: ${newBidCount}.`, 'success');
+
+  const container = document.getElementById('app-content-body');
+  if (activePage === 'active' && container) {
+    renderBuyerActiveRFQs(container);
+  } else if (activePage === 'seller-opportunities' && container) {
+    renderSellerOpportunities(container);
+  } else if (activePage === 'admin-dashboard' && container) {
+    renderAdminDashboard(container);
+  }
+};
+
+window.viewRFQBidsGlobal = (rfqId) => {
+  const allRfqs = getAllSystemRFQs();
+  const rfq = allRfqs.find(r => r.id === rfqId) || { id: rfqId, product: 'Procurement Requirement' };
+
+  const bids = SYSTEM_RFQ_BIDS[rfqId] || [];
+
+  const badgeElem = document.getElementById('buyer-bids-count-badge');
+  if (badgeElem) {
+    badgeElem.textContent = `${bids.length} Bid(s) Submitted`;
+    badgeElem.className = bids.length > 0 ? 'badge badge-success' : 'badge badge-warning';
+  }
+
+  const titleElem = document.getElementById('buyer-bids-modal-title');
+  if (titleElem) {
+    titleElem.textContent = `Submitted Bids for ${rfq.id}: ${rfq.product}`;
+  }
+
+  const tbody = document.getElementById('buyer-bids-tbody');
+  if (tbody) {
+    if (bids.length === 0) {
+      tbody.innerHTML = `
+        <tr>
+          <td colspan="6" style="text-align:center; padding:24px; color:var(--text-muted);">
+            No seller bids submitted yet for this tender. Qualified manufacturers are reviewing specifications.
+          </td>
+        </tr>
+      `;
+    } else {
+      tbody.innerHTML = bids.map(bid => `
+        <tr>
+          <td class="table-cell-title">${bid.id}</td>
+          <td>
+            <strong>${bid.sellerOrg}</strong>
+            <div style="font-size:0.75rem; color:var(--text-muted);">${bid.sellerEmail}</div>
+          </td>
+          <td>
+            <span class="badge badge-success btn-sm">${bid.status}</span>
+          </td>
+          <td style="font-weight:700; color:var(--primary);">${bid.quotePrice}</td>
+          <td>${bid.date}</td>
+          <td>
+            <button class="primary-btn btn-sm" onclick="window.acceptSellerBidGlobal('${rfq.id}', '${bid.id}', '${bid.sellerOrg}')">
+              Accept & Award Tender
+            </button>
+          </td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  toggleModal('buyer-bids-modal', true);
+};
+
+window.acceptSellerBidGlobal = (rfqId, bidId, sellerOrg) => {
+  toggleModal('buyer-bids-modal', false);
+  addNotification('success', `Tender Awarded: Buyer accepted bid ${bidId} from ${sellerOrg} for RFQ ${rfqId}.`);
+  addAuditLog(currentUser.email || 'buyer@aspen.gov', `Accepted winning bid ${bidId} from ${sellerOrg} for RFQ ${rfqId}. Tender contract awarded.`);
+  showToast(`Tender ${rfqId} successfully awarded to ${sellerOrg}!`, 'success');
+
+  const container = document.getElementById('app-content-body');
+  if (activePage === 'active' && container) {
+    renderBuyerActiveRFQs(container);
+  }
 };
 
 // ==========================================================================
