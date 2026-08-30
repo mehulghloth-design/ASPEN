@@ -973,33 +973,6 @@ function initUIComponents() {
     toggleModal('bis-suitability-modal', false);
   });
 
-  // Global event delegation for all "View BIS Report" / "BIS Report" buttons across the application
-  document.addEventListener('click', (e) => {
-    const btn = e.target.closest('.view-bis-report-btn, [data-rfq-id]');
-    if (btn && btn.dataset.rfqId) {
-      const rfqId = btn.dataset.rfqId;
-      e.preventDefault();
-      e.stopPropagation();
-      window.showBISSuitabilityReportGlobal(rfqId);
-      return;
-    }
-
-    // Text matching fallback for any button or badge saying "BIS Report" or "View BIS"
-    const textBtn = e.target.closest('button, a, span');
-    if (textBtn && (textBtn.textContent.includes('BIS Report') || textBtn.textContent.includes('View BIS'))) {
-      const row = textBtn.closest('tr');
-      if (row) {
-        const titleTd = row.querySelector('.table-cell-title');
-        if (titleTd && titleTd.textContent.trim()) {
-          const rfqId = titleTd.textContent.trim();
-          e.preventDefault();
-          e.stopPropagation();
-          window.showBISSuitabilityReportGlobal(rfqId);
-        }
-      }
-    }
-  });
-
   // BIS Modal tab switcher
   const bisTabs = document.querySelectorAll('.bis-tab-btn');
   bisTabs.forEach(tab => {
