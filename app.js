@@ -255,6 +255,8 @@ const TRANSLATIONS = {
     home: "Home",
     category: "Category",
     bis_standards: "BIS Standards",
+    buyer_rfq_oversight: "Buyer Drafted Tenders & RFQs Oversight",
+    total_rfqs: "Total RFQs",
     my_products: "My Products",
     audit_logs: "Audit Logs",
     settings: "Settings",
@@ -427,6 +429,8 @@ const TRANSLATIONS = {
     home: "मुख्य पृष्ठ",
     category: "श्रेणी",
     bis_standards: "बीआईएस मानक",
+    buyer_rfq_oversight: "खरीदार द्वारा तैयार निविदाएं एवं आरएफक्यू समीक्षा",
+    total_rfqs: "कुल आरएफक्यू",
     my_products: "मेरे उत्पाद",
     audit_logs: "ऑडिट लॉग",
     settings: "सेटिंग्स",
@@ -599,6 +603,8 @@ const TRANSLATIONS = {
     home: "ముఖ్య పేజీ",
     category: "వర్గం",
     bis_standards: "బిఐఎస్ ప్రమాణాలు",
+    buyer_rfq_oversight: "కొనుగోలుదారు రూపొందించిన టెండర్లు మరియు RFQల పరిశీలన",
+    total_rfqs: "మొత్తం RFQలు",
     my_products: "నా ఉత్పత్తులు",
     audit_logs: "ఆడిట్ లాగ్స్",
     settings: "సెట్టింగ్‌లు",
@@ -2069,24 +2075,61 @@ function showNLUModal() {
 // 8. BUYER WORKFLOWS & ACTIONS
 // ==========================================================================
 
+function getAllSystemRFQs() {
+  const map = new Map();
+  const sampleRfqs = [
+    { id: 'RFQ-2026-004', product: 'Cotton Bandage Cloth', qty: '12,500 m', date: '2026-08-29', status: 'Active', bids: 3, standard: 'IS 758', buyer: 'buyer@aspen.gov.in', org: 'National Health Authority' },
+    { id: 'RFQ-2026-002', product: 'Laboratory Glass Tubes', qty: '5,000 units', date: '2026-08-15', status: 'Bidding Closed', bids: 8, standard: 'IS 4381', buyer: 'a.saxena@cpwd.gov.in', org: 'Central Public Works Dept (CPWD)' }
+  ];
+  sampleRfqs.forEach(r => map.set(r.id, r));
+
+  if (MOCK_USERS.buyer && MOCK_USERS.buyer.rfqs) {
+    MOCK_USERS.buyer.rfqs.forEach(r => map.set(r.id, {
+      ...r,
+      buyer: r.buyer || MOCK_USERS.buyer.email,
+      org: r.org || MOCK_USERS.buyer.org || 'Ministry of Infrastructure'
+    }));
+  }
+
+  if (currentUser && currentUser.rfqs) {
+    currentUser.rfqs.forEach(r => map.set(r.id, {
+      ...r,
+      buyer: r.buyer || currentUser.email,
+      org: r.org || currentUser.org || 'Verified Buyer'
+    }));
+  }
+
+  return Array.from(map.values());
+}
+
 function createRFQFromParsed() {
   const newRfq = {
-    id: `RFQ-2026-00${currentUser.rfqs.length + 5}`,
+    id: `RFQ-2026-00${(currentUser.rfqs ? currentUser.rfqs.length : 0) + 5}`,
     product: parsedSearchResult.product,
     qty: parsedSearchResult.quantity === 'Not Specified' ? '10,000 units' : parsedSearchResult.quantity,
     date: new Date().toISOString().split('T')[0],
     status: 'Active',
     bids: 0,
-    standard: parsedSearchResult.matchedStandard ? parsedSearchResult.matchedStandard.code : 'IS 758'
+    standard: parsedSearchResult.matchedStandard ? parsedSearchResult.matchedStandard.code : 'IS 758',
+    buyer: currentUser.email || 'buyer@aspen.gov',
+    org: currentUser.org || 'Verified Buyer'
   };
 
+  if (!currentUser.rfqs) currentUser.rfqs = [];
   currentUser.rfqs.unshift(newRfq);
-  
+
+  if (MOCK_USERS.buyer) {
+    if (!MOCK_USERS.buyer.rfqs) MOCK_USERS.buyer.rfqs = [];
+    if (!MOCK_USERS.buyer.rfqs.some(r => r.id === newRfq.id)) {
+      MOCK_USERS.buyer.rfqs.unshift(newRfq);
+    }
+  }
+
   // Add notification and audit log
-  addNotification('info', `Tender Drafted: RFQ for ${newRfq.product} has been published successfully.`);
+  addNotification('info', `Tender Drafted: RFQ for ${newRfq.product} (${newRfq.id}) published by ${currentUser.email}.`);
   addAuditLog(currentUser.email, `Published official tender RFQ ${newRfq.id} requesting compliance against ${newRfq.standard}.`);
 
-  showToast(`Successfully created ${newRfq.id}!`, 'success');
+  showToast(`Successfully created ${newRfq.id}! Reflected in Administrator dashboard.`, 'success');
   navigateTo('active');
 }
 
@@ -2499,15 +2542,86 @@ function renderAdminDashboard(container) {
   splitGrid.appendChild(auditCol);
   container.appendChild(splitGrid);
 
-  // Set pending count dynamically
+  // Set pending count and RFQs count dynamically
   const pendingCount = MOCK_VERIFICATION_LISTS.buyers.filter(b => b.status === 'Pending Review').length +
                        MOCK_VERIFICATION_LISTS.sellers.filter(s => s.status === 'Pending Review').length;
   statsRow.querySelector('#admin-stat-pending').textContent = pendingCount;
 
+  const allRfqs = getAllSystemRFQs();
+  const statRfqsElem = statsRow.querySelector('.stat-card:nth-child(2) .stat-value');
+  if (statRfqsElem) statRfqsElem.textContent = allRfqs.length;
+
   auditCol.querySelector('#admin-view-all-logs').addEventListener('click', () => {
     navigateTo('admin-audit');
   });
+
+  // Buyer Drafted Tenders & RFQs Oversight Table
+  const rfqsSection = document.createElement('div');
+  rfqsSection.className = 'dashboard-section';
+  rfqsSection.style.marginTop = '2rem';
+
+  rfqsSection.innerHTML = `
+    <div class="section-header-row">
+      <h3>${t('buyer_rfq_oversight')}</h3>
+      <span class="badge badge-success">${allRfqs.length} ${t('total_rfqs')}</span>
+    </div>
+    <div class="product-table-wrapper card" style="padding:0; overflow:hidden;">
+      <table class="aspen-table">
+        <thead>
+          <tr>
+            <th>${t('rfq_id')}</th>
+            <th>Requirement / Product</th>
+            <th>Quantity</th>
+            <th>BIS Standard</th>
+            <th>Buyer / Organization</th>
+            <th>Date Published</th>
+            <th>Status</th>
+            <th>Admin Action</th>
+          </tr>
+        </thead>
+        <tbody id="admin-rfq-tbody">
+          ${allRfqs.map(rfq => `
+            <tr>
+              <td class="table-cell-title">${rfq.id}</td>
+              <td><strong>${rfq.product}</strong></td>
+              <td>${rfq.qty || rfq.quantity || '10,000 units'}</td>
+              <td><span class="bis-card-code" style="cursor:pointer;" onclick="window.showBISModalGlobal('${rfq.standard}')">${rfq.standard}</span></td>
+              <td>
+                <div style="font-size:0.85rem; font-weight:600;">${rfq.org || 'Buyer Dept'}</div>
+                <div style="font-size:0.75rem; color:var(--text-muted);">${rfq.buyer || 'buyer@aspen.gov'}</div>
+              </td>
+              <td>${rfq.date}</td>
+              <td><span class="badge ${rfq.status === 'Active' ? 'badge-success' : 'badge-info'}" id="admin-rfq-status-${rfq.id}">${rfq.status}</span></td>
+              <td>
+                <button class="primary-btn btn-sm" id="admin-rfq-btn-${rfq.id}" onclick="window.adminAuditRFQGlobal('${rfq.id}')">Audit & Approve</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    </div>
+  `;
+  container.appendChild(rfqsSection);
 }
+
+// Expose admin RFQ audit global handler
+window.adminAuditRFQGlobal = (rfqId) => {
+  const badge = document.getElementById(`admin-rfq-status-${rfqId}`);
+  if (badge) {
+    badge.className = 'badge badge-success';
+    badge.textContent = 'Audited & Approved';
+  }
+  const btn = document.getElementById(`admin-rfq-btn-${rfqId}`);
+  if (btn) {
+    btn.disabled = true;
+    btn.textContent = 'Approved';
+    btn.className = 'secondary-btn btn-sm';
+    btn.style.opacity = '0.6';
+  }
+  addNotification('success', `Admin Compliance Audit: Tender ${rfqId} has been audited & verified by Administrator.`);
+  addAuditLog(currentUser.email || 'admin@aspen.gov', `Administrator audited and approved tender RFQ ${rfqId}.`);
+  showToast(`Tender ${rfqId} audited & verified successfully!`, 'success');
+};
 
 function renderAdminUsers(container) {
   container.innerHTML = `
