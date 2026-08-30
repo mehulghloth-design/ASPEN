@@ -2527,13 +2527,8 @@ function showAddProductForm() {
 }
 
 function renderSellerOpportunities(container) {
-  // Sellers view Buyer RFQs and submit bids
-  const allBuyerRfqs = [];
-  Object.values(MOCK_USERS).forEach(user => {
-    if (user.role === 'buyer' && user.rfqs) {
-      allBuyerRfqs.push(...user.rfqs);
-    }
-  });
+  // Sellers view all Buyer RFQs from the unified system store (including Admin Overrides)
+  const allBuyerRfqs = getAllSystemRFQs();
 
   container.innerHTML = `
     <div class="page-title-area">
