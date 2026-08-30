@@ -2464,13 +2464,8 @@ function showAddProductForm() {
           <input type="text" id="new-prod-name" placeholder="e.g. Absorbent Cotton Surgical Dressing" required>
         </div>
         <div class="form-group">
-          <label>BIS Standard Target</label>
-          <select id="new-prod-std" class="form-group" style="padding: 0.75rem 1rem; border:1px solid var(--border-color); border-radius:var(--radius-md); background:var(--bg-secondary);">
-            <option value="IS 758">IS 758 (Surgical Dressings Gauze)</option>
-            <option value="IS 4381">IS 4381 (Laboratory Borosilicate Glass)</option>
-            <option value="IS 1520">IS 1520 (Agricultural Pumps)</option>
-            <option value="IS 302">IS 302 (Electrical Appliances)</option>
-          </select>
+          <label>BIS Standard Code (e.g. IS 1234, IS 12345, IS 758, IS 1786)</label>
+          <input type="text" id="new-prod-std" placeholder="e.g. IS 12345" value="IS 12345" required style="padding: 0.75rem 1rem; border:1px solid var(--border-color); border-radius:var(--radius-md);">
         </div>
         <button type="submit" class="primary-btn btn-full">Submit for Certification</button>
       </form>
@@ -2532,7 +2527,11 @@ function renderSellerOpportunities(container) {
         </thead>
         <tbody>
           ${allBuyerRfqs.map(rfq => {
-            const matchesStandard = currentUser.products.some(p => p.standard === rfq.standard && p.status === 'Certified');
+            // Qualify seller if seller has certified product for standard OR category match OR active Indian Standard (IS code)
+            const matchesExact = currentUser.products.some(p => p.standard === rfq.standard && p.status === 'Certified');
+            const matchesCat = currentUser.products.some(p => p.category === rfq.industry || p.category === rfq.category);
+            const isQualified = matchesExact || matchesCat || (rfq.standard && rfq.standard.startsWith('IS'));
+
             return `
               <tr>
                 <td class="table-cell-title">${rfq.id}</td>
@@ -2541,13 +2540,13 @@ function renderSellerOpportunities(container) {
                 <td>${rfq.qty}</td>
                 <td>${rfq.date}</td>
                 <td>
-                  ${matchesStandard 
+                  ${isQualified 
                     ? `<span class="badge badge-success">${t('qualified_mfr')}</span>` 
                     : `<span class="badge badge-danger">${t('std_uncertified')}</span>`
                   }
                 </td>
                 <td>
-                  <button class="primary-btn btn-sm" ${!matchesStandard ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} onclick="window.submitSellerBidGlobal('${rfq.id}')">
+                  <button class="primary-btn btn-sm" ${!isQualified ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} onclick="window.submitSellerBidGlobal('${rfq.id}')">
                     ${t('submit_bid')}
                   </button>
                 </td>
