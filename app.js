@@ -2205,6 +2205,9 @@ function populateAllSearchResults(results) {
     });
 
     container.appendChild(row);
+  });
+}
+
 const SYSTEM_RFQ_BIDS = JSON.parse(localStorage.getItem('aspen_system_rfq_bids') || '{}');
 
 // Pre-populate mock bids for sample RFQs if not already set
