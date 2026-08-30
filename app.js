@@ -2578,7 +2578,8 @@ function renderSellerOpportunities(container) {
                       : `<span class="badge badge-warning">⚠️ Non-Standard (Awaiting Admin Exemption)</span>`
                   }
                 </td>
-                <td>
+                <td style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+                  <button class="secondary-btn btn-sm" onclick="window.showBISSuitabilityReportGlobal('${rfq.id}')">View BIS Report</button>
                   <button class="primary-btn btn-sm" ${!biddingAllowed ? 'disabled style="opacity:0.5; cursor:not-allowed;"' : ''} onclick="window.submitSellerBidGlobal('${rfq.id}')">
                     ${biddingAllowed ? t('submit_bid') : 'Blocked: Awaiting Admin Exemption'}
                   </button>
@@ -2877,17 +2878,47 @@ window.showBISSuitabilityReportGlobal = (rfqId) => {
   if (!rfq) return;
 
   const score = rfq.bisSuitabilityScore || 85.0;
+  const satisfiesBIS = rfq.bisSatisfied !== false;
+  const hasAdminOverride = rfq.adminOverride === true || (SYSTEM_ADMIN_OVERRIDES && SYSTEM_ADMIN_OVERRIDES[rfqId] === true);
+
   const badgeElem = document.getElementById('bis-suitability-score-badge');
   if (badgeElem) {
-    badgeElem.textContent = `${score.toFixed(1)}% BIS Suitability`;
-    badgeElem.className = score >= 80 ? 'badge badge-success' : 'badge badge-info';
+    if (hasAdminOverride) {
+      badgeElem.textContent = `${score.toFixed(1)}% BIS Score • Admin Exemption Granted`;
+      badgeElem.className = 'badge badge-success';
+    } else if (satisfiesBIS) {
+      badgeElem.textContent = `${score.toFixed(1)}% BIS Suitability • Fully Compliant`;
+      badgeElem.className = 'badge badge-success';
+    } else {
+      badgeElem.textContent = `${score.toFixed(1)}% BIS Score • Awaiting Admin Exemption`;
+      badgeElem.className = 'badge badge-warning';
+    }
   }
 
-  document.getElementById('bis-suitability-modal-title').textContent = `Bureau of Indian Standards Report: ${rfq.id}`;
-  document.getElementById('bis-suitability-code').textContent = `${rfq.standard} — ${rfq.bisSuitabilityStatus || 'Fully BIS Compliant'}`;
-  document.getElementById('bis-suitability-product').textContent = `Drafted Product: ${rfq.product} (Quantity: ${rfq.qty || rfq.quantity || '10,000 units'})`;
-  document.getElementById('bis-suitability-eval').textContent = rfq.bisSuitabilityDetails || `${score.toFixed(1)}% suitability score calculated by AI NLU parser against active Bureau of Indian Standards testing guidelines.`;
-  document.getElementById('bis-suitability-specs').textContent = rfq.bisSpecs || 'Technical specs: Standard dimensions, material tolerances, and NABL laboratory testing rules.';
+  const titleElem = document.getElementById('bis-suitability-modal-title');
+  if (titleElem) {
+    titleElem.textContent = `Bureau of Indian Standards Report: ${rfq.id}`;
+  }
+
+  const codeElem = document.getElementById('bis-suitability-code');
+  if (codeElem) {
+    codeElem.textContent = `${rfq.standard} — ${rfq.bisSuitabilityStatus || (satisfiesBIS ? 'Satisfies BIS Standards' : 'Below BIS Threshold')}`;
+  }
+
+  const prodElem = document.getElementById('bis-suitability-product');
+  if (prodElem) {
+    prodElem.textContent = `Drafted Product: ${rfq.product} (Required Quantity: ${rfq.qty || rfq.quantity || '10,000 units'})`;
+  }
+
+  const evalElem = document.getElementById('bis-suitability-eval');
+  if (evalElem) {
+    evalElem.textContent = rfq.bisSuitabilityDetails || `${score.toFixed(1)}% suitability score calculated by AI NLU parser against active Bureau of Indian Standards testing guidelines for ${rfq.product}.`;
+  }
+
+  const specsElem = document.getElementById('bis-suitability-specs');
+  if (specsElem) {
+    specsElem.textContent = rfq.bisSpecs || 'Technical specs: Standard dimensions, material tolerances, and NABL laboratory testing rules.';
+  }
 
   toggleModal('bis-suitability-modal', true);
 };
