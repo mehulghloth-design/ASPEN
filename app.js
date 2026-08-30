@@ -16,6 +16,50 @@ const API_BASE_URL = RAILWAY_BACKEND_URL ||
     : '');  // Same-origin if self-hosted
 
 // ==========================================================================
+// 0.5. FASTAPI CLIENT (BIS Intelligence Backend)
+// Change FASTAPI_BASE if the ngrok URL changes.
+// ==========================================================================
+
+const FASTAPI_BASE = 'https://silo-travel-habitant.ngrok-free.dev';
+const FASTAPI_HEADERS = {
+  'Content-Type': 'application/json',
+  'ngrok-skip-browser-warning': '1',
+};
+
+async function apiBISSearch(query) {
+  const res = await fetch(`${FASTAPI_BASE}/api/search`, {
+    method: 'POST',
+    headers: FASTAPI_HEADERS,
+    body: JSON.stringify({ text: query }),
+  });
+  if (!res.ok) throw new Error(`Search API error: ${res.status}`);
+  return res.json(); // { search_query, results: [{is_code, title, category, match_metadata, specifications}] }
+}
+
+async function apiGetCategories() {
+  const res = await fetch(`${FASTAPI_BASE}/api/categories`, { headers: FASTAPI_HEADERS });
+  if (!res.ok) throw new Error(`Categories API error: ${res.status}`);
+  return res.json(); // [{ category, sub_categories: [...] }]
+}
+
+async function apiBrowseItems(category, subCategory) {
+  const cat = encodeURIComponent(category);
+  const sub = encodeURIComponent(subCategory);
+  const res = await fetch(`${FASTAPI_BASE}/api/browse/${cat}/${sub}`, { headers: FASTAPI_HEADERS });
+  if (!res.ok) throw new Error(`Browse API error: ${res.status}`);
+  return res.json(); // { total, items: [{id, is_code, title, status, specifications}] }
+}
+
+// Cache to avoid duplicate API calls within the same session
+const _apiCache = {};
+async function cachedApiGetCategories() {
+  if (_apiCache.categories) return _apiCache.categories;
+  const data = await apiGetCategories();
+  _apiCache.categories = data;
+  return data;
+}
+
+// ==========================================================================
 // 1. MOCK DATABASES & CONFIG
 // ==========================================================================
 
@@ -1660,28 +1704,44 @@ function renderPublicHomeWidgets(container) {
       <button class="text-btn" id="home-view-all-bis">${t('browse_registry')}</button>
     </div>
     <div class="bis-highlights-grid" id="home-bis-list">
-      <!-- Loaded dynamically below -->
+      <div class="card bis-highlight-card" style="opacity:0.5; pointer-events:none;">
+        <div class="bis-card-code">Loading...</div>
+        <div class="bis-card-center"><div class="bis-card-title">Fetching live BIS standards...</div></div>
+      </div>
     </div>
   `;
 
+  container.querySelector('#home-view-all-bis').addEventListener('click', () => navigateTo('bis'));
   const bisList = container.querySelector('#home-bis-list');
-  MOCK_BIS_STANDARDS.slice(0, 3).forEach(std => {
-    const item = document.createElement('div');
-    item.className = 'card bis-highlight-card';
-    item.innerHTML = `
-      <div class="bis-card-code">${std.code}</div>
-      <div class="bis-card-center">
-        <div class="bis-card-title">${std.title}</div>
-        <div class="bis-card-sub">${std.industry} • Published ${std.date}</div>
-      </div>
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
-    `;
-    item.addEventListener('click', () => showBISModal(std.code));
-    bisList.appendChild(item);
-  });
 
-  container.querySelector('#home-view-all-bis').addEventListener('click', () => {
-    navigateTo('bis');
+  apiBISSearch('electrical wiring construction safety').then(data => {
+    const results = (data.results || []).slice(0, 3);
+    bisList.innerHTML = '';
+    if (results.length === 0) {
+      bisList.innerHTML = `<div class="card bis-highlight-card"><div class="bis-card-title">No data available.</div></div>`;
+      return;
+    }
+    results.forEach(r => {
+      const score = r.match_metadata?.confidence_score || 0;
+      const item = document.createElement('div');
+      item.className = 'card bis-highlight-card';
+      item.style.cursor = 'pointer';
+      item.innerHTML = `
+        <div class="bis-card-code">${r.is_code}</div>
+        <div class="bis-card-center">
+          <div class="bis-card-title">${r.title}</div>
+          <div class="bis-card-sub" style="display:flex; align-items:center; gap:6px; flex-wrap:wrap;">
+            <span class="meta-tag">${r.category}</span>
+            <span class="badge ${score >= 80 ? 'badge-success' : 'badge-info'} btn-sm" style="padding:0.1rem 0.4rem;">${score.toFixed(1)}% AI Match</span>
+          </div>
+        </div>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+      `;
+      item.addEventListener('click', () => showBISModalFromApiResult(r));
+      bisList.appendChild(item);
+    });
+  }).catch(err => {
+    bisList.innerHTML = `<div class="card bis-highlight-card"><div class="bis-card-title" style="color:var(--red-text);">FastAPI unavailable: ${err.message}</div></div>`;
   });
 }
 
@@ -1744,24 +1804,98 @@ function renderSellerHomeWidgets(container) {
 // 7. INTELLIGENT NLU PARSER AND CENTRAL SEARCH HANDLER
 // ==========================================================================
 
-function handleSearch(query) {
+async function handleSearch(query) {
   if (!query.trim()) {
     showToast('Please enter a procurement description to analyze.', 'warning');
     return;
   }
 
   currentSearchQuery = query;
-  
-  // Set UI state to show search parser working
+
+  // Show "AI Active" indicator
   const indicator = document.getElementById('search-indicator');
   indicator.style.display = 'flex';
-  
-  // Simulated NLU delay
-  setTimeout(() => {
+
+  try {
+    // Call the real FastAPI AI search
+    const data = await apiBISSearch(query);
+
+    // Normalize API response into parsedSearchResult shape
+    const results = data.results || [];
+    const topResult = results[0] || null;
+
+    // Extract quantity from query (kept from before)
+    const qtyMatch = query.match(/(\d{1,3}(,\d{3})*(\.\d+)?)\s*(meters|units|rolls|m|pumps|tubes|pieces|qty|quantity)?/i);
+    const quantity = qtyMatch ? qtyMatch[0] : 'Not Specified';
+
+    parsedSearchResult = {
+      query,
+      product: topResult ? topResult.title : query,
+      industry: topResult ? topResult.category : 'General Industrial',
+      quantity,
+      application: topResult ? `${topResult.category} — AI Confidence: ${topResult.match_metadata?.confidence_score?.toFixed(1) || 'N/A'}%` : 'General Institutional Supply',
+      // Map top result into the matchedStandard shape the NLU modal expects
+      matchedStandard: topResult ? {
+        code: topResult.is_code,
+        title: topResult.title,
+        industry: topResult.category,
+        committee: `Confidence Score: ${topResult.match_metadata?.confidence_score?.toFixed(1) || 'N/A'}%`,
+        description: buildSpecsDescription(topResult.specifications),
+        date: topResult.match_metadata?.status || 'Active',
+        relevance: `AI-matched with ${topResult.match_metadata?.confidence_score?.toFixed(1) || 'N/A'}% confidence`,
+        manufacturers: [],
+        apiResults: results, // store all results for the expanded view
+      } : null,
+    };
+
     indicator.style.display = 'none';
-    parsedSearchResult = simulateNLUParser(query);
     showNLUModal();
-  }, 600);
+
+    // Show all results in the NLU modal standards container
+    if (results.length > 1) {
+      populateAllSearchResults(results);
+    }
+
+  } catch (err) {
+    indicator.style.display = 'none';
+    console.error('FastAPI search error:', err);
+    showToast(`Search error: ${err.message}. Check if FastAPI server is running.`, 'error');
+  }
+}
+
+// Build a readable description from the specifications object
+function buildSpecsDescription(specs) {
+  if (!specs || typeof specs !== 'object') return 'No specifications available.';
+  return Object.entries(specs)
+    .map(([key, val]) => `${key.replace(/_/g, ' ')}: ${Array.isArray(val) ? val.join(', ') : val}`)
+    .join(' • ');
+}
+
+// Populate the standards container with all search results (not just top)
+function populateAllSearchResults(results) {
+  const container = document.getElementById('nlu-standards-container');
+  if (!container) return;
+  container.innerHTML = '';
+  results.forEach((r, i) => {
+    const score = r.match_metadata?.confidence_score || 0;
+    const row = document.createElement('div');
+    row.className = 'nlu-standard-row';
+    row.style.cssText = i > 0 ? 'opacity:0.85; margin-top:8px;' : '';
+    row.innerHTML = `
+      <div class="nlu-standard-left">
+        <span class="bis-card-code">${r.is_code}</span>
+        <div>
+          <div class="bis-card-title">${r.title}</div>
+          <div class="bis-card-sub" style="display:flex; align-items:center; gap:8px; margin-top:4px;">
+            <span class="meta-tag">${r.category}</span>
+            <span class="badge ${score >= 80 ? 'badge-success' : 'badge-info'} btn-sm" style="padding:0.1rem 0.5rem;">${score.toFixed(1)}% match</span>
+            <span class="badge badge-success btn-sm" style="padding:0.1rem 0.5rem;">${r.match_metadata?.status || 'Active'}</span>
+          </div>
+        </div>
+      </div>
+    `;
+    container.appendChild(row);
+  });
 }
 
 function simulateNLUParser(query) {
@@ -2598,7 +2732,6 @@ function renderCategoriesPageFiltered(filterCategory, container) {
 
   const activeFilter = filterCategory || 'All';
 
-  // Build Filters bar Header
   const pageHeader = document.createElement('div');
   pageHeader.className = 'page-title-area';
   pageHeader.innerHTML = `
@@ -2613,138 +2746,174 @@ function renderCategoriesPageFiltered(filterCategory, container) {
   `;
   targetContainer.appendChild(pageHeader);
 
-  // Filters Controls
+  // Category + subcategory selectors (populated from live API)
   const filtersBar = document.createElement('div');
   filtersBar.className = 'filters-bar';
   filtersBar.innerHTML = `
     <div class="filter-group">
       <span class="filter-label">${t('segment_filter')}</span>
-      <select id="catalog-filter-select" class="filter-select">
-        <option value="All" ${activeFilter === 'All' ? 'selected' : ''}>${t('all_categories')}</option>
-        <option value="Medical" ${activeFilter === 'Medical' ? 'selected' : ''}>${t('cat_medical')}</option>
-        <option value="Electrical" ${activeFilter === 'Electrical' ? 'selected' : ''}>${t('cat_electrical')}</option>
-        <option value="Construction" ${activeFilter === 'Construction' ? 'selected' : ''}>${t('cat_construction')}</option>
-        <option value="Laboratory" ${activeFilter === 'Laboratory' ? 'selected' : ''}>${t('cat_lab')}</option>
-        <option value="Mechanical" ${activeFilter === 'Mechanical' ? 'selected' : ''}>${t('cat_mechanical')}</option>
+      <select id="catalog-cat-select" class="filter-select">
+        <option value="">Loading categories...</option>
       </select>
     </div>
-
     <div class="filter-group">
-      <span class="filter-label">${t('availability')}</span>
-      <select id="catalog-avail-select" class="filter-select">
-        <option value="All">${t('all_stocks')}</option>
-        <option value="In Stock">${t('in_stock_only')}</option>
+      <span class="filter-label">Sub-Category</span>
+      <select id="catalog-subcat-select" class="filter-select">
+        <option value="">Select category first</option>
       </select>
     </div>
-    
     <input type="text" id="catalog-search-input" class="filter-search-input" placeholder="${t('search_products_placeholder')}">
   `;
   targetContainer.appendChild(filtersBar);
 
-  // Catalog Grid Container
   const gridContainer = document.createElement('div');
   gridContainer.className = 'products-grid';
   targetContainer.appendChild(gridContainer);
 
-  // Filter and render products
-  const applyFilters = () => {
-    const selectedCat = filtersBar.querySelector('#catalog-filter-select').value;
-    const selectedAvail = filtersBar.querySelector('#catalog-avail-select').value;
-    const searchQuery = filtersBar.querySelector('#catalog-search-input').value.toLowerCase();
+  const catSelect = filtersBar.querySelector('#catalog-cat-select');
+  const subCatSelect = filtersBar.querySelector('#catalog-subcat-select');
+  const searchInput = filtersBar.querySelector('#catalog-search-input');
 
-    gridContainer.innerHTML = '';
+  let allCategories = [];
 
-    const filtered = MOCK_PRODUCTS.filter(p => {
-      const matchCat = selectedCat === 'All' || p.category === selectedCat;
-      const matchAvail = selectedAvail === 'All' || p.availability === selectedAvail;
-      const matchQuery = p.name.toLowerCase().includes(searchQuery) || p.standard.toLowerCase().includes(searchQuery);
-      return matchCat && matchAvail && matchQuery;
+  // Load categories from API
+  cachedApiGetCategories().then(cats => {
+    allCategories = cats;
+    catSelect.innerHTML = `<option value="">${t('all_categories')}</option>`;
+    cats.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.category;
+      opt.textContent = c.category;
+      if (c.category === activeFilter) opt.selected = true;
+      catSelect.appendChild(opt);
     });
 
-    if (filtered.length === 0) {
-      gridContainer.innerHTML = `<div class="card" style="grid-column: 1/-1; text-align:center; padding:3rem; color:var(--text-muted);">${t('no_products')}</div>`;
+    if (activeFilter && activeFilter !== 'All') {
+      catSelect.value = activeFilter;
+      populateSubCats(activeFilter);
+      loadBrowse(activeFilter, null);
+    } else {
+      // Load first category by default
+      const firstCat = cats[0];
+      if (firstCat) {
+        catSelect.value = firstCat.category;
+        populateSubCats(firstCat.category);
+        const firstSub = firstCat.sub_categories[0];
+        if (firstSub) loadBrowse(firstCat.category, firstSub);
+      }
+    }
+  }).catch(err => {
+    catSelect.innerHTML = `<option>Error loading categories</option>`;
+    gridContainer.innerHTML = `<div class="card" style="text-align:center; padding:2rem; color:var(--red-text);">Failed to load categories: ${err.message}</div>`;
+  });
+
+  function populateSubCats(category) {
+    const catData = allCategories.find(c => c.category === category);
+    subCatSelect.innerHTML = '';
+    if (catData) {
+      catData.sub_categories.forEach(sub => {
+        const opt = document.createElement('option');
+        opt.value = sub;
+        opt.textContent = sub;
+        subCatSelect.appendChild(opt);
+      });
+    }
+  }
+
+  function loadBrowse(category, subCategory) {
+    const sub = subCategory || subCatSelect.value;
+    if (!category || !sub) return;
+    gridContainer.innerHTML = `<div class="card" style="text-align:center; padding:2rem; color:var(--text-muted);">Loading ${category} / ${sub}...</div>`;
+    apiBrowseItems(category, sub).then(data => {
+      let items = data.items || [];
+      const q = searchInput.value.toLowerCase();
+      if (q) items = items.filter(item => item.title.toLowerCase().includes(q) || item.is_code.toLowerCase().includes(q));
+      renderBrowseItems(items, category);
+    }).catch(err => {
+      gridContainer.innerHTML = `<div class="card" style="text-align:center; padding:2rem; color:var(--red-text);">Browse error: ${err.message}</div>`;
+    });
+  }
+
+  function renderBrowseItems(items, category) {
+    gridContainer.innerHTML = '';
+    if (items.length === 0) {
+      gridContainer.innerHTML = `<div class="card" style="grid-column:1/-1; text-align:center; padding:3rem; color:var(--text-muted);">${t('no_products')}</div>`;
       return;
     }
-
-    filtered.forEach(p => {
+    items.forEach(item => {
+      const specs = buildSpecsDescription(item.specifications);
       const card = document.createElement('div');
       card.className = 'card product-card';
       card.innerHTML = `
         <div class="product-card-top">
           <div>
-            <span class="product-card-category">${p.category}</span>
-            <h3 class="product-card-title">${p.name}</h3>
+            <span class="product-card-category">${category}</span>
+            <h3 class="product-card-title">${item.title}</h3>
           </div>
-          <span class="bis-card-code" style="cursor:pointer;" onclick="window.showBISModalGlobal('${p.standard}')">${p.standard}</span>
+          <span class="bis-card-code" style="cursor:pointer;">${item.is_code}</span>
         </div>
         <div class="product-card-specs">
           <div class="spec-line">
-            <span class="spec-label">${t('manufacturer')}</span>
-            <span class="spec-val">${p.manufacturer}</span>
+            <span class="spec-label">Specifications</span>
+            <span class="spec-val" style="font-size:0.78rem; color:var(--text-sub);">${specs || 'Available on request'}</span>
           </div>
           <div class="spec-line">
             <span class="spec-label">${t('stock_status')}</span>
-            <span class="spec-val">${p.availability}</span>
+            <span class="spec-val">
+              <span class="badge badge-success btn-sm">${item.status || 'Active'}</span>
+            </span>
           </div>
         </div>
         <div class="product-card-footer">
-          <button class="primary-btn btn-sm" onclick="window.showProductProcureAlertGlobal('${p.id}')">${t('audit_compliance_btn')}</button>
+          <button class="primary-btn btn-sm browse-view-btn">${t('audit_compliance_btn')}</button>
         </div>
       `;
+      card.querySelector('.browse-view-btn').addEventListener('click', () => showBISModalFromApiResult(item));
+      card.querySelector('.bis-card-code').addEventListener('click', () => showBISModalFromApiResult(item));
       gridContainer.appendChild(card);
     });
-  };
+  }
 
-  // Attach filter change listeners
-  filtersBar.querySelector('#catalog-filter-select').addEventListener('change', applyFilters);
-  filtersBar.querySelector('#catalog-avail-select').addEventListener('change', applyFilters);
-  filtersBar.querySelector('#catalog-search-input').addEventListener('input', applyFilters);
-
-  // Run initial render
-  applyFilters();
+  catSelect.addEventListener('change', () => {
+    const cat = catSelect.value;
+    if (cat) {
+      populateSubCats(cat);
+      const sub = subCatSelect.options[0]?.value;
+      if (sub) loadBrowse(cat, sub);
+    }
+  });
+  subCatSelect.addEventListener('change', () => loadBrowse(catSelect.value, subCatSelect.value));
+  let debounce;
+  searchInput.addEventListener('input', () => {
+    clearTimeout(debounce);
+    debounce = setTimeout(() => loadBrowse(catSelect.value, subCatSelect.value), 400);
+  });
 }
 
-window.showProductProcureAlertGlobal = (prodId) => {
-  const prod = MOCK_PRODUCTS.find(p => p.id === prodId);
-  if (prod) {
-    showToast(`Compliance check: ${prod.name} holds active BIS standard license under code ${prod.standard}.`, 'success');
-  }
-};
-
-// ==========================================================================
-// 12. BIS STANDARDS DIRECTORY PAGE
-// ==========================================================================
 
 function renderBISPage(container) {
   container.innerHTML = `
     <div class="page-title-area">
       <div style="display:flex; align-items:center; gap:12px; margin-bottom:8px;">
         <button class="app-back-btn" onclick="window.navigateBackGlobal()" style="padding:5px 14px; font-size:0.8rem;">
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
           <span>${t('back')}</span>
         </button>
         <h1 style="margin:0;">${t('bis_page_title')}</h1>
       </div>
       <p>${t('bis_page_sub')}</p>
     </div>
-
     <div class="filters-bar">
       <div class="filter-group">
         <span class="filter-label">${t('industrial_domain')}</span>
         <select id="bis-domain-select" class="filter-select">
           <option value="All">${t('all_domains')}</option>
-          <option value="Medical">${t('medical_domain')}</option>
-          <option value="Electrical">${t('electrical_domain')}</option>
-          <option value="Construction">${t('construction_domain')}</option>
-          <option value="Laboratory">${t('lab_domain')}</option>
-          <option value="Mechanical">${t('mechanical_domain')}</option>
         </select>
       </div>
       <input type="text" id="bis-search-input" class="filter-search-input" placeholder="${t('search_bis_placeholder')}">
     </div>
-
     <div class="bis-list" id="bis-standards-grid-container">
-      <!-- Loaded dynamically -->
+      <div class="card" style="text-align:center; padding:2rem; color:var(--text-muted);">Loading live BIS standards from AI...</div>
     </div>
   `;
 
@@ -2752,54 +2921,73 @@ function renderBISPage(container) {
   const searchInput = container.querySelector('#bis-search-input');
   const gridContainer = container.querySelector('#bis-standards-grid-container');
 
-  const renderList = () => {
-    gridContainer.innerHTML = '';
-    const selectedDomain = domainSelect.value;
-    const searchVal = searchInput.value.toLowerCase();
-
-    const filtered = MOCK_BIS_STANDARDS.filter(s => {
-      const matchDomain = selectedDomain === 'All' || s.industry.includes(selectedDomain);
-      const matchSearch = s.code.toLowerCase().includes(searchVal) || s.title.toLowerCase().includes(searchVal) || s.description.toLowerCase().includes(searchVal);
-      return matchDomain && matchSearch;
+  cachedApiGetCategories().then(cats => {
+    cats.forEach(c => {
+      const opt = document.createElement('option');
+      opt.value = c.category;
+      opt.textContent = c.category;
+      domainSelect.appendChild(opt);
     });
+  }).catch(() => {});
 
-    if (filtered.length === 0) {
-      gridContainer.innerHTML = `<div class="card" style="grid-column: 1/-1; text-align:center; padding:3rem; color:var(--text-muted);">${t('no_standards')}</div>`;
+  function renderApiResults(results) {
+    gridContainer.innerHTML = '';
+    if (!results || results.length === 0) {
+      gridContainer.innerHTML = `<div class="card" style="grid-column:1/-1; text-align:center; padding:3rem; color:var(--text-muted);">${t('no_standards')}</div>`;
       return;
     }
-
-    filtered.forEach(std => {
+    results.forEach(r => {
+      const score = r.match_metadata?.confidence_score || 0;
+      const specs = buildSpecsDescription(r.specifications);
+      const safeId = (r.is_code || '').replace(/\s/g, '_').replace(/[^a-zA-Z0-9_]/g, '');
       const card = document.createElement('div');
       card.className = 'card bis-full-card';
       card.innerHTML = `
         <div class="bis-full-card-top">
-          <span class="bis-card-code">${std.code}</span>
-          <span class="badge badge-success">${t('mandatory_standard')}</span>
+          <span class="bis-card-code">${r.is_code}</span>
+          <div style="display:flex; gap:6px; align-items:center; flex-wrap:wrap;">
+            <span class="badge badge-success">${t('mandatory_standard')}</span>
+            <span class="badge ${score >= 80 ? 'badge-success' : 'badge-info'} btn-sm" style="padding:0.15rem 0.5rem;">${score.toFixed(1)}% AI</span>
+          </div>
         </div>
         <div>
-          <h3 class="bis-full-card-title">${std.title}</h3>
-          <p class="meta-tag" style="margin-top:0.25rem;">${std.industry}</p>
+          <h3 class="bis-full-card-title">${r.title}</h3>
+          <p class="meta-tag" style="margin-top:0.25rem;">${r.category}</p>
         </div>
-        <p class="bis-full-card-description">${std.description}</p>
+        <p class="bis-full-card-description">${specs || 'Specifications available on request.'}</p>
         <div class="bis-full-card-meta">
-          <span>${t('committee_label')} ${std.committee.split(' ')[0]}</span>
-          <span>${t('published_label')} ${std.date}</span>
+          <span>${t('committee_label')} AI-Matched</span>
+          <span>${r.match_metadata?.status || 'Active'}</span>
         </div>
-        <button class="secondary-btn btn-sm btn-full" onclick="window.showBISModalGlobal('${std.code}')">${t('view_protocol_btn')}</button>
+        <button class="secondary-btn btn-sm btn-full bis-api-view-btn">${t('view_protocol_btn')}</button>
       `;
+      card.querySelector('.bis-api-view-btn').addEventListener('click', () => showBISModalFromApiResult(r));
       gridContainer.appendChild(card);
     });
-  };
+  }
 
-  domainSelect.addEventListener('change', renderList);
-  searchInput.addEventListener('input', renderList);
-  
-  renderList();
+  let debounceTimer;
+  function loadBISSearch(query) {
+    gridContainer.innerHTML = `<div class="card" style="text-align:center; padding:2rem; color:var(--text-muted);">Searching AI BIS database for "${query}"...</div>`;
+    apiBISSearch(query || 'standard').then(data => {
+      let results = data.results || [];
+      const domain = domainSelect.value;
+      if (domain && domain !== 'All') results = results.filter(r => r.category === domain);
+      renderApiResults(results);
+    }).catch(err => {
+      gridContainer.innerHTML = `<div class="card" style="text-align:center; padding:2rem; color:var(--red-text);">API Error: ${err.message}</div>`;
+    });
+  }
+
+  domainSelect.addEventListener('change', () => loadBISSearch(searchInput.value || 'standard'));
+  searchInput.addEventListener('input', () => {
+    clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => loadBISSearch(searchInput.value || 'standard'), 400);
+  });
+
+  loadBISSearch('standard');
 }
 
-// ==========================================================================
-// 12.5 REGISTER PAGE
-// ==========================================================================
 
 function renderRegisterPage(container) {
   container.innerHTML = `
